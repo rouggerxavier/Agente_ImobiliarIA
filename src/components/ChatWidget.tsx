@@ -1,12 +1,63 @@
-import { MessageCircle, X, Send } from "lucide-react";
-import { useState } from "react";
+import { MessageCircle, X, Send, Loader2 } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
+
+interface Message {
+  role: "user" | "agent";
+  text: string;
+}
 
 const ChatWidget = () => {
   const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([
+    { role: "agent", text: "Olá! 👋 Sou o assistente virtual da NovaLar. Como posso ajudar você hoje?" },
+  ]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [sessionId] = useState(() => crypto.randomUUID());
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const sendMessage = async () => {
+    const text = input.trim();
+    if (!text || loading) return;
+
+    setInput("");
+    setMessages((prev) => [...prev, { role: "user", text }]);
+    setLoading(true);
+
+    try {
+      const res = await fetch(`${BACKEND_URL}/webhook`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: sessionId, message: text }),
+      });
+      const data = await res.json();
+      const reply = data.reply || data.response || data.message || "Sem resposta.";
+      setMessages((prev) => [...prev, { role: "agent", text: reply }]);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        { role: "agent", text: "Desculpe, não consegui me conectar ao servidor. Tente novamente." },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
 
   return (
     <div className="fixed bottom-6 right-6 z-50">
-      {/* Chat window */}
       {open && (
         <div className="mb-4 w-80 sm:w-96 bg-card rounded-2xl shadow-chat border border-border overflow-hidden animate-fade-in-up">
           {/* Header */}
@@ -20,23 +71,47 @@ const ChatWidget = () => {
             </button>
           </div>
 
-          {/* Messages area */}
-          <div className="h-64 p-4 overflow-y-auto space-y-3">
-            <div className="bg-secondary rounded-xl rounded-tl-sm px-4 py-2.5 max-w-[80%]">
-              <p className="font-body text-sm text-foreground">
-                Olá! 👋 Sou o assistente virtual da NovaLar. Como posso ajudar você hoje?
-              </p>
-            </div>
+          {/* Messages */}
+          <div className="h-72 p-4 overflow-y-auto space-y-3">
+            {messages.map((msg, i) => (
+              <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div
+                  className={`rounded-xl px-4 py-2.5 max-w-[80%] font-body text-sm ${
+                    msg.role === "user"
+                      ? "bg-accent text-accent-foreground rounded-br-sm"
+                      : "bg-secondary text-foreground rounded-tl-sm"
+                  }`}
+                >
+                  {msg.text}
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div className="flex justify-start">
+                <div className="bg-secondary rounded-xl rounded-tl-sm px-4 py-2.5">
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
           </div>
 
           {/* Input */}
           <div className="border-t border-border px-3 py-3 flex items-center gap-2">
             <input
               type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder="Digite sua mensagem..."
               className="flex-1 bg-muted rounded-full px-4 py-2 font-body text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30"
+              disabled={loading}
             />
-            <button className="bg-accent text-accent-foreground rounded-full p-2 hover:opacity-90 transition-opacity">
+            <button
+              onClick={sendMessage}
+              disabled={loading || !input.trim()}
+              className="bg-accent text-accent-foreground rounded-full p-2 hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
               <Send className="h-4 w-4" />
             </button>
           </div>
