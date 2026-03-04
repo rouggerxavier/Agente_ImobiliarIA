@@ -7,8 +7,8 @@ import hashlib
 import logging
 from fastapi import APIRouter, Request, Query, HTTPException
 from fastapi.responses import PlainTextResponse, JSONResponse
-from app.core.config import settings
-from app.services.whatsapp_sender import send_whatsapp_message, extract_message_from_webhook, WhatsAppSendError
+from core.config import settings
+from services.whatsapp_sender import send_whatsapp_message, extract_message_from_webhook, WhatsAppSendError
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

@@ -10,7 +10,7 @@ const Navbar = () => {
         <a href="#" className="flex items-center gap-2">
           <Building2 className="h-7 w-7 text-accent" />
           <span className="font-display text-xl font-semibold text-foreground">
-            Nova<span className="text-accent">Lar</span>
+            Gran<span className="text-accent">Kasa</span>
           </span>
         </a>
 

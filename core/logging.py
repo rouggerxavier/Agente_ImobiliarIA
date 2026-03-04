@@ -5,7 +5,7 @@ Sanitizes sensitive data (tokens, secrets) from logs.
 import logging
 import sys
 from typing import Any
-from app.core.config import settings
+from core.config import settings
 
 
 class SanitizingFormatter(logging.Formatter):

@@ -16,7 +16,7 @@ const About = () => {
             Sua parceira em cada conquista
           </h2>
           <p className="font-body text-muted-foreground text-lg leading-relaxed">
-            A NovaLar é referência no mercado imobiliário, unindo tecnologia e atendimento personalizado para encontrar o imóvel ideal para você e sua família.
+            A GranKasa é referência no mercado imobiliário, unindo tecnologia e atendimento personalizado para encontrar o imóvel ideal para você e sua família.
           </p>
         </div>
         <div className="grid sm:grid-cols-3 gap-8 max-w-2xl mx-auto">

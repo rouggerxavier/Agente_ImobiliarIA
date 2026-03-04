@@ -9,7 +9,7 @@ Verifica que:
 """
 
 import pytest
-from app.agent.extractor import parse_budget_range, extract_criteria
+from agent.extractor import parse_budget_range, extract_criteria
 
 
 class TestParseBudgetRange:
@@ -168,7 +168,7 @@ class TestBudgetRangeIntegration:
         """
         Range válido não deve gerar conflito ao aplicar updates.
         """
-        from app.agent.state import SessionState
+        from agent.state import SessionState
 
         state = SessionState(session_id="test-range")
 
@@ -190,7 +190,7 @@ class TestBudgetRangeIntegration:
         """
         Cenário 5: Range 800k-1.2M existente, usuário diz 'máximo 600k' -> conflito real.
         """
-        from app.agent.state import SessionState
+        from agent.state import SessionState
 
         state = SessionState(session_id="test-conflict")
 
@@ -214,7 +214,7 @@ class TestBudgetRangeIntegration:
         """
         Atualizar budget_max para valor >= budget_min não deve gerar conflito.
         """
-        from app.agent.state import SessionState
+        from agent.state import SessionState
 
         state = SessionState(session_id="test-update")
 
@@ -239,21 +239,21 @@ class TestBudgetFormatting:
 
     def test_format_budget_thousands(self):
         """Valores abaixo de 1M devem usar pontos."""
-        from app.agent.controller import _format_budget
+        from agent.controller import _format_budget
 
         assert _format_budget(800_000) == "R$ 800.000"
         assert _format_budget(950_000) == "R$ 950.000"
 
     def test_format_budget_millions_int(self):
         """Valores em milhões inteiros."""
-        from app.agent.controller import _format_budget
+        from agent.controller import _format_budget
 
         assert _format_budget(1_000_000) == "R$ 1 milhão"
         assert _format_budget(2_000_000) == "R$ 2 milhões"
 
     def test_format_budget_millions_decimal(self):
         """Valores em milhões com decimais."""
-        from app.agent.controller import _format_budget
+        from agent.controller import _format_budget
 
         assert _format_budget(1_200_000) == "R$ 1.2 milhões"
         assert _format_budget(1_500_000) == "R$ 1.5 milhões"

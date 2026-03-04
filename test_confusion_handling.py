@@ -3,8 +3,8 @@ Testes para detecção e tratamento de confusão do usuário
 """
 
 import pytest
-from app.agent.controller import handle_message
-from app.agent.state import store
+from agent.controller import handle_message
+from agent.state import store
 
 
 @pytest.fixture
@@ -204,8 +204,8 @@ def test_confusion_detector_module_direct():
     """
     Testa o módulo confusion_detector diretamente
     """
-    from app.agent.confusion_detector import detect_confusion
-    from app.agent.state import SessionState
+    from agent.confusion_detector import detect_confusion
+    from agent.state import SessionState
 
     state = SessionState(session_id="direct_test")
     state.last_question_key = "parking"
@@ -233,7 +233,7 @@ def test_offer_options_threshold():
     """
     Testa que opções são oferecidas apenas após limiar de tentativas
     """
-    from app.agent.confusion_detector import should_offer_options
+    from agent.confusion_detector import should_offer_options
 
     # 1 tentativa: não oferece
     should, opts = should_offer_options("parking", 1)
@@ -251,7 +251,7 @@ def test_formatted_options_message():
     """
     Testa formatação de mensagem com opções
     """
-    from app.agent.confusion_detector import format_options_message
+    from agent.confusion_detector import format_options_message
 
     options = ["1 vaga", "2 vagas", "3 ou mais"]
     message = format_options_message("parking", options)
@@ -264,7 +264,7 @@ def test_is_answering_field_detection():
     """
     Testa detecção de se mensagem é resposta ou pergunta
     """
-    from app.agent.confusion_detector import is_answering_field
+    from agent.confusion_detector import is_answering_field
 
     # Pergunta (com ?)
     assert not is_answering_field("vagas de carro?", "parking")

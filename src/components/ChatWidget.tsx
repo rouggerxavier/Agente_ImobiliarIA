@@ -2,6 +2,7 @@ import { MessageCircle, X, Send, Loader2 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
+const BACKEND_API_KEY = import.meta.env.VITE_BACKEND_API_KEY as string | undefined;
 
 interface Message {
   role: "user" | "agent";
@@ -11,7 +12,7 @@ interface Message {
 const ChatWidget = () => {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { role: "agent", text: "Olá! 👋 Sou o assistente virtual da NovaLar. Como posso ajudar você hoje?" },
+    { role: "agent", text: "Olá! 👋 Sou o assistente virtual da GranKasa. Como posso ajudar você hoje?" },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -31,9 +32,14 @@ const ChatWidget = () => {
     setLoading(true);
 
     try {
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (BACKEND_API_KEY) {
+        headers["X-API-Key"] = BACKEND_API_KEY;
+      }
+
       const res = await fetch(`${BACKEND_URL}/webhook`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ session_id: sessionId, message: text }),
       });
       const data = await res.json();
@@ -63,7 +69,7 @@ const ChatWidget = () => {
           {/* Header */}
           <div className="bg-primary px-5 py-4 flex items-center justify-between">
             <div>
-              <p className="font-display text-sm font-semibold text-primary-foreground">Assistente NovaLar</p>
+              <p className="font-display text-sm font-semibold text-primary-foreground">Assistente GranKasa</p>
               <p className="font-body text-xs text-primary-foreground/60">Powered by IA • Online</p>
             </div>
             <button onClick={() => setOpen(false)} className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">

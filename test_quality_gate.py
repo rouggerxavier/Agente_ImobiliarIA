@@ -3,8 +3,8 @@ Testes para Quality Gate - Controle de handoff baseado em quality_score
 """
 
 import pytest
-from app.agent.state import SessionState
-from app.agent.quality_gate import (
+from agent.state import SessionState
+from agent.quality_gate import (
     should_handoff,
     identify_quality_gaps,
     next_question_from_quality_gaps,
@@ -12,7 +12,7 @@ from app.agent.quality_gate import (
     mark_field_refusal,
     MAX_QUALITY_GATE_TURNS,
 )
-from app.agent.quality import compute_quality_score
+from agent.quality import compute_quality_score
 
 
 def test_should_handoff_with_high_quality_score():

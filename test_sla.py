@@ -3,8 +3,8 @@ Testes para SLA Policy - Service Level Agreements e Fluxo Diferenciado
 """
 
 import pytest
-from app.agent.state import SessionState
-from app.agent.sla import (
+from agent.state import SessionState
+from agent.sla import (
     classify_lead,
     compute_sla_action,
     get_sla_message,

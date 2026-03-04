@@ -1,2 +1,21 @@
-# Created by pytest automatically.
-*
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+
+# Virtual environment
+.venv/
+venv/
+
+# Node / frontend
+node_modules/
+dist/
+
+# Environment
+.env
+.env.local
+
+# OS / editor
+.DS_Store
+Thumbs.db

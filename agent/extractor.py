@@ -466,7 +466,7 @@ def extract_criteria(message: str, known_neighborhoods: Iterable[str]) -> Dict[s
     if "area de lazer" in lowered or "lazer" in lowered:
         if "nao" in lowered or "não" in lowered or "sem lazer" in lowered:
             result["leisure_required"] = "no"
-        elif "preciso" in lowered or "importante" in lowered or "essencial" in lowered:
+        elif "preciso" in lowered or "importante" in lowered or "essencial" in lowered or "queria" in lowered or "sim" in lowered or "precisa" in lowered:
             result["leisure_required"] = "yes"
         elif is_indifferent:
             result["leisure_required"] = "indifferent"

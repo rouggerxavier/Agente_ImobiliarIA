@@ -1,9 +1,9 @@
 """
 Quick test to verify leisure_required is not auto-filled by 'tanto faz' from other fields
 """
-from app.agent.state import store
-from app.agent.controller import handle_message
-from app.agent.rules import missing_critical_fields
+from agent.state import store
+from agent.controller import handle_message
+from agent.rules import missing_critical_fields
 
 
 def test_leisure_not_auto_filled():

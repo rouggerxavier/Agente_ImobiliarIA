@@ -17,7 +17,7 @@ print("=" * 60)
 
 # 1. Testa conexão com Groq
 print("\n1️⃣ Testando conexão com Groq API...")
-from app.agent.llm import test_llm_connection, GROQ_API_KEY, GROQ_MODEL
+from agent.llm import test_llm_connection, GROQ_API_KEY, GROQ_MODEL
 
 if not GROQ_API_KEY:
     print("❌ ERRO: GROQ_API_KEY não encontrada no .env")
@@ -34,7 +34,7 @@ else:
 
 # 2. Testa classificação de intenção
 print("\n2️⃣ Testando classificação de intenção...")
-from app.agent.ai_agent import get_agent
+from agent.ai_agent import get_agent
 
 agent = get_agent()
 
@@ -69,7 +69,7 @@ print("   ✅ Extração funcionando!")
 
 # 4. Testa planejamento de diálogo
 print("\n4️⃣ Testando planejamento de diálogo...")
-from app.agent.state import SessionState
+from agent.state import SessionState
 
 state = SessionState(session_id="test_001")
 state.history.append({"role": "user", "text": "Oi, quero alugar um apartamento"})

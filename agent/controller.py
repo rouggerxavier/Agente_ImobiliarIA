@@ -157,10 +157,12 @@ def _short_reply_updates(message: str, state: SessionState) -> Dict[str, Dict[st
 
     # NOVO: Leisure required
     if lk == "leisure_required":
-        if is_yes:
+        _yes_leisure = is_yes or any(kw in msg for kw in {"queria", "quero", "precisa", "preciso", "sim precisa", "sim queria", "importante", "essencial"})
+        _no_leisure = is_no or any(kw in msg for kw in {"nao precisa", "não precisa", "nao preciso", "não preciso", "sem lazer", "nao e essencial", "não é essencial"})
+        if _yes_leisure:
             updates["leisure_required"] = {"value": "yes", "status": "confirmed", "source": "user", "raw_text": message}
             return updates
-        if is_no:
+        if _no_leisure:
             updates["leisure_required"] = {"value": "no", "status": "confirmed", "source": "user", "raw_text": message}
             return updates
 

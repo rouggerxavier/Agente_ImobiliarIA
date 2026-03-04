@@ -9,10 +9,14 @@ import os
 import sys
 from dotenv import load_dotenv
 
-# Fix encoding no Windows
-if sys.platform == "win32":
-    import codecs
-    sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
+# Evita coleta pelo pytest (este arquivo é um script utilitário).
+__test__ = False
+
+
+def _configure_windows_utf8_output() -> None:
+    """Configura UTF-8 no terminal Windows sem quebrar o pytest."""
+    if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
 
 # Cores para terminal
 GREEN = "\033[92m"
@@ -37,7 +41,7 @@ def check_env_file():
     """Verifica se o arquivo .env existe"""
     if not os.path.exists(".env"):
         print_error("Arquivo .env não encontrado!")
-        print_info("Crie o arquivo com: cp .env.example .env")
+        print_info("Crie o arquivo com base no .env.example")
         return False
     print_success("Arquivo .env encontrado")
     return True
@@ -46,12 +50,17 @@ def check_api_keys():
     """Verifica se as API keys estão configuradas"""
     load_dotenv()
 
+    gemini_key = os.getenv("GEMINI_API_KEY")
     openai_key = os.getenv("OPENAI_API_KEY")
     groq_key = os.getenv("GROQ_API_KEY")
 
-    if not openai_key and not groq_key:
+    if not gemini_key and not openai_key and not groq_key:
         print_error("Nenhuma API key configurada!")
-        print_info("Configure OPENAI_API_KEY ou GROQ_API_KEY no .env")
+        print_info("Configure GEMINI_API_KEY, OPENAI_API_KEY ou GROQ_API_KEY no .env")
+        return False, None
+
+    if gemini_key and gemini_key in ["sua_chave_gemini_aqui", "COLE_SUA_CHAVE_GEMINI_AQUI"]:
+        print_error("GEMINI_API_KEY não foi configurada (ainda é placeholder)")
         return False, None
 
     if openai_key and openai_key in ["sua_chave_aqui", "your_gemini_key_here", "COLE_SUA_NOVA_CHAVE_GEMINI_AQUI"]:
@@ -62,7 +71,7 @@ def check_api_keys():
         print_error("GROQ_API_KEY não foi configurada (ainda é placeholder)")
         return False, None
 
-    provider = "Gemini/OpenAI" if openai_key else "Groq"
+    provider = "Gemini (SDK nativo)" if gemini_key else ("OpenAI" if openai_key else "Groq")
     print_success(f"API key configurada ({provider})")
     return True, provider
 
@@ -70,14 +79,20 @@ def check_model_format():
     """Verifica se o formato do modelo está correto"""
     load_dotenv()
 
+    gemini_key = os.getenv("GEMINI_API_KEY")
     openai_key = os.getenv("OPENAI_API_KEY")
-    model = os.getenv("OPENAI_MODEL") if openai_key else os.getenv("GROQ_MODEL")
+    if gemini_key:
+        model = os.getenv("GEMINI_MODEL")
+    elif openai_key:
+        model = os.getenv("OPENAI_MODEL")
+    else:
+        model = os.getenv("GROQ_MODEL")
 
     if not model:
         print_warning("Modelo não especificado (usará default)")
         return True
 
-    # Verifica formato errado do Gemini
+    # Verifica formato errado legado do Gemini
     if model.startswith("models/"):
         print_error(f"Formato do modelo incorreto: {model}")
         print_info(f"Remova o prefixo 'models/', use apenas: {model.replace('models/', '')}")
@@ -87,18 +102,22 @@ def check_model_format():
     return True
 
 def check_base_url():
-    """Verifica se a base URL está correta"""
+    """Verifica configuração de base URL (apenas OpenAI/Groq)."""
     load_dotenv()
+
+    if os.getenv("GEMINI_API_KEY"):
+        print_info("Gemini nativo configurado (OPENAI_BASE_URL não é necessário).")
+        return True
 
     base_url = os.getenv("OPENAI_BASE_URL")
     if not base_url:
         return True  # Groq ou OpenAI padrão
 
-    # Verifica se é Gemini sem barra final
+    # Alerta se tentar usar endpoint OpenAI-compat para Gemini
     if "generativelanguage.googleapis.com" in base_url:
-        if not base_url.endswith("/"):
-            print_warning(f"Base URL sem barra final: {base_url}")
-            print_info("Adicione / no final da URL")
+        print_warning("OPENAI_BASE_URL aponta para Gemini.")
+        print_info("Para maior estabilidade, use GEMINI_API_KEY + GEMINI_MODEL (SDK nativo).")
+    else:
         print_success(f"Base URL configurada: {base_url}")
 
     return True
@@ -108,7 +127,7 @@ def test_connection():
     print_info("Testando conexão com LLM...")
 
     try:
-        from app.agent.llm import test_llm_connection, LLM_PROVIDER, LLM_MODEL
+        from agent.llm import test_llm_connection, LLM_PROVIDER, LLM_MODEL
 
         print_info(f"Provedor: {LLM_PROVIDER}")
         print_info(f"Modelo: {LLM_MODEL}")
@@ -128,6 +147,8 @@ def test_connection():
         return False
 
 def main():
+    _configure_windows_utf8_output()
+
     print("=" * 60)
     print("🔍 Testador de Configuração LLM")
     print("=" * 60)

@@ -18,7 +18,7 @@ from typing import Any, Dict, Optional, List, Tuple, Union
 from dotenv import load_dotenv
 from openai import OpenAI, OpenAIError
 
-load_dotenv()
+load_dotenv(override=True)
 
 
 def _env_int(name: str, default: int) -> int:
@@ -39,33 +39,50 @@ def _env_bool(name: str, default: bool) -> bool:
         return default
     return raw.strip().lower() in ("true", "1", "yes", "y", "on")
 
-# Prioriza OpenAI/OpenRouter se disponível, senão usa Groq
+# Chaves/modelos por provedor
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-GROQ_MODEL = os.getenv("GROQ_MODEL")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 TRIAGE_ONLY = os.getenv("TRIAGE_ONLY", "false").strip().lower() in ("true", "1", "yes", "on")
 
 logger = logging.getLogger(__name__)
 
 # Configuração do provedor LLM
-if OPENAI_API_KEY:
+if GEMINI_API_KEY:
+    LLM_API_KEY = GEMINI_API_KEY
+    LLM_MODEL = GEMINI_MODEL
+    LLM_BASE_URL = None
+    LLM_PROVIDER = "gemini_native"
+    logger.info("Usando Google Gemini (SDK nativo) com modelo %s", LLM_MODEL)
+elif OPENAI_API_KEY and "generativelanguage.googleapis.com" in (OPENAI_BASE_URL or ""):
+    # Compatibilidade: usuário ainda usando variáveis OPENAI_* apontando para Gemini.
     LLM_API_KEY = OPENAI_API_KEY
-    LLM_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")  # Modelo padrão
-    LLM_BASE_URL = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+    LLM_MODEL = os.getenv("GEMINI_MODEL") or OPENAI_MODEL or "gemini-2.5-flash"
+    LLM_BASE_URL = None
+    LLM_PROVIDER = "gemini_native"
+    logger.warning(
+        "OPENAI_BASE_URL aponta para Gemini; usando SDK nativo do Google. "
+        "Prefira configurar GEMINI_API_KEY e GEMINI_MODEL no .env."
+    )
+elif OPENAI_API_KEY:
+    LLM_API_KEY = OPENAI_API_KEY
+    LLM_MODEL = OPENAI_MODEL
+    LLM_BASE_URL = OPENAI_BASE_URL
 
-    # Auto-detecta provedor pela base URL ou chave
+    # Auto-detecta provedor pela chave
     if OPENAI_API_KEY.startswith("sk-or-v1"):
         LLM_PROVIDER = "openrouter"
         logger.info("Usando OpenRouter com modelo %s", LLM_MODEL)
-    elif "generativelanguage.googleapis.com" in LLM_BASE_URL:
-        LLM_PROVIDER = "gemini"
-        logger.info("Usando Google Gemini com modelo %s", LLM_MODEL)
     else:
         LLM_PROVIDER = "openai"
         logger.info("Usando OpenAI com modelo %s", LLM_MODEL)
 elif GROQ_API_KEY:
     LLM_API_KEY = GROQ_API_KEY
-    LLM_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+    LLM_MODEL = GROQ_MODEL
     GROQ_MODEL = LLM_MODEL
     LLM_BASE_URL = os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
     LLM_PROVIDER = "groq"
@@ -264,7 +281,7 @@ _CACHE_TTL = 300  # 5 minutos
 def _client() -> OpenAI:
     """Cria cliente OpenAI (compatível com OpenAI e Groq)"""
     if not LLM_API_KEY:
-        raise RuntimeError("Nenhuma API key configurada (OPENAI_API_KEY ou GROQ_API_KEY)")
+        raise RuntimeError("Nenhuma API key configurada (GEMINI_API_KEY, OPENAI_API_KEY ou GROQ_API_KEY)")
     return OpenAI(api_key=LLM_API_KEY, base_url=LLM_BASE_URL)
 
 
@@ -280,8 +297,13 @@ def _call_gemini_native(
     """
     logger.debug("Chamando Gemini nativo - Modelo: %s, Temp: %s, MaxTokens: %s", LLM_MODEL, temperature, max_tokens)
 
-    from google import genai
-    from google.genai import types
+    try:
+        from google import genai
+        from google.genai import types
+    except Exception as exc:
+        raise RuntimeError(
+            "Pacote `google-genai` não instalado. Rode: pip install google-genai"
+        ) from exc
 
     # Cria o cliente
     client = genai.Client(api_key=LLM_API_KEY)
@@ -289,8 +311,10 @@ def _call_gemini_native(
     # Combina system prompt + user message
     full_prompt = f"{system_prompt}\n\n{user_message}"
 
-    # Adiciona prefixo "models/" se não existir
-    model_name = LLM_MODEL if LLM_MODEL.startswith("models/") else f"models/{LLM_MODEL}"
+    # O SDK nativo espera modelo sem prefixo "models/".
+    model_name = (LLM_MODEL or GEMINI_MODEL or "gemini-2.5-flash")
+    if model_name.startswith("models/"):
+        model_name = model_name.replace("models/", "", 1)
 
     # Gera resposta
     response = client.models.generate_content(
@@ -302,7 +326,10 @@ def _call_gemini_native(
         )
     )
 
-    return response.text
+    text = getattr(response, "text", None)
+    if text:
+        return text
+    return str(response)
 
 
 def _call_llm_gemini_native(
@@ -416,8 +443,8 @@ def call_llm(
     Raises:
         RuntimeError: Se API key não estiver configurada ou houver erro após todas as tentativas
     """
-    # Se for Gemini, usa API nativa ao invés do endpoint OpenAI bugado
-    if LLM_PROVIDER == "gemini":
+    # Se for Gemini, usa API nativa (SDK oficial Google).
+    if LLM_PROVIDER in {"gemini", "gemini_native"}:
         return _call_llm_gemini_native(
             system_prompt=system_prompt,
             user_message=user_message,
@@ -459,7 +486,7 @@ def call_llm(
     # IMPORTANTE: Gemini pode não suportar response_format diretamente via OpenAI API
     # Se estiver usando Gemini, injeta instrução no system prompt ao invés
     if response_format == "json_object":
-        if LLM_PROVIDER == "gemini" or "gemini" in LLM_MODEL.lower():
+        if LLM_PROVIDER in {"gemini", "gemini_native"} or "gemini" in (LLM_MODEL or "").lower():
             # Para Gemini: adiciona instrução no system prompt
             messages[0]["content"] = messages[0]["content"] + "\n\nIMPORTANTE: Você DEVE responder APENAS com JSON válido, sem texto adicional antes ou depois. Formato: {\"chave\": \"valor\"}"
         else:

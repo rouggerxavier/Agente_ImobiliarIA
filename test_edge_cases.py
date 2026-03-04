@@ -10,8 +10,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from dotenv import load_dotenv
 load_dotenv()
 
-from app.agent.controller import handle_message
-from app.agent.state import store
+from agent.controller import handle_message
+from agent.state import store
 
 def reset_session(session_id: str):
     """Reseta uma sessão para começar teste limpo"""

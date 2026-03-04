@@ -1,10 +1,14 @@
-﻿import pytest
+import unicodedata
 from unittest.mock import patch
 
 from agent.controller import handle_message
 from agent.state import store
 from agent import llm as llm_module, rules as rules_module, controller as controller_module
 from app import faq
+
+
+def _normalize(text: str) -> str:
+    return unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii").lower()
 
 
 def triage_patches():
@@ -58,6 +62,12 @@ def test_faq_answer_then_continue_triage():
     with patch.object(llm_module, "USE_LLM", False), p1, p2, p3:
         resp = handle_message(session, "aceita financiamento?")
 
-    reply = resp["reply"].lower()
+    reply = _normalize(resp["reply"])
     assert "financiamento" in reply
-    assert "cidade" in reply or "bairro" in reply or "imovel" in reply or "comprar ou alugar" in reply
+    assert (
+        "cidade" in reply
+        or "bairro" in reply
+        or "imovel" in reply
+        or "comprar ou alugar" in reply
+        or "comprar ou pra alugar" in reply
+    )

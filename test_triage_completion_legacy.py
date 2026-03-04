@@ -1,5 +1,5 @@
-import app.agent.controller as controller
-from app.agent.state import store
+import agent.controller as controller
+from agent.state import store
 
 
 class _StubAgent:

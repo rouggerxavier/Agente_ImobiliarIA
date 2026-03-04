@@ -12,9 +12,9 @@ E aceita "indifferent/tanto faz" como valor válido.
 """
 
 import pytest
-from app.agent.state import SessionState, store
-from app.agent.controller import handle_message
-from app.agent.rules import missing_critical_fields
+from agent.state import SessionState, store
+from agent.controller import handle_message
+from agent.rules import missing_critical_fields
 
 
 @pytest.fixture

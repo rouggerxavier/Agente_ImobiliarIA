@@ -1,22 +1,22 @@
-from __future__ import annotations
 import os
 import secrets
 import logging
 from datetime import datetime
 from fastapi import FastAPI, Request, Depends, HTTPException, Header
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
-from app.agent.controller import handle_message
-from app.agent.llm import LLM_PREWARM, prewarm_llm
-from app.core.logging import setup_logging
-from app.core.config import settings
-from app.routes.whatsapp import router as whatsapp_router
+from agent.controller import handle_message
+from agent.llm import LLM_PREWARM, prewarm_llm
+from core.logging import setup_logging
+from core.config import settings
+from routes.whatsapp import router as whatsapp_router
 
-load_dotenv()
+load_dotenv(override=True)
 
 # Setup logging first
 setup_logging()
@@ -29,6 +29,25 @@ limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(title="Agente Imobiliário WhatsApp", version="0.1.0")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+frontend_origins_env = os.getenv("FRONTEND_ORIGINS")
+if frontend_origins_env:
+    allowed_origins = [origin.strip() for origin in frontend_origins_env.split(",") if origin.strip()]
+else:
+    allowed_origins = [
+        "http://localhost:8080",
+        "http://127.0.0.1:8080",
+        "http://localhost:8501",
+        "http://127.0.0.1:8501",
+    ]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Include routers
 app.include_router(whatsapp_router)

@@ -4,9 +4,9 @@ Demonstração do Quality Gate - Controle de Handoff Inteligente
 Este script mostra como o quality gate funciona na prática.
 """
 
-from app.agent.state import SessionState
-from app.agent.quality import compute_quality_score
-from app.agent.quality_gate import (
+from agent.state import SessionState
+from agent.quality import compute_quality_score
+from agent.quality_gate import (
     should_handoff,
     identify_quality_gaps,
     next_question_from_quality_gaps,
@@ -21,7 +21,7 @@ def print_separator():
 
 def demo_high_quality_immediate_handoff():
     """Cenário 1: Quality Score alto (A/B) -> Handoff imediato."""
-    print("[CENARIO 1] Quality Score Alto (A/B) - Handoff Imediato")
+    print("[CENÁRIO 1] Quality Score Alto (A/B) - Handoff Imediato")
     print_separator()
 
     state = SessionState(session_id="demo-1")
@@ -53,7 +53,7 @@ def demo_high_quality_immediate_handoff():
 
 def demo_low_quality_blocked_handoff():
     """Cenário 2: Quality Score baixo (C/D) -> Handoff bloqueado, perguntas cirúrgicas."""
-    print("[CENARIO CENÁRIO 2: Quality Score Baixo (C/D) - Handoff Bloqueado")
+    print("[CENÁRIO 2] Quality Score Baixo (C/D) - Handoff Bloqueado")
     print_separator()
 
     state = SessionState(session_id="demo-2")
@@ -91,7 +91,7 @@ def demo_low_quality_blocked_handoff():
 
 def demo_quality_gate_progression():
     """Cenário 3: Progressão através do quality gate (3 perguntas)."""
-    print("[CENARIO CENÁRIO 3: Progressão Através do Quality Gate")
+    print("[CENÁRIO 3] Progressão Através do Quality Gate")
     print_separator()
 
     state = SessionState(session_id="demo-3")
@@ -143,7 +143,7 @@ def demo_quality_gate_progression():
 
 def demo_field_refusal():
     """Cenário 4: Usuário recusa informar campo."""
-    print("[CENARIO CENÁRIO 4: Detecção de Recusa de Campo")
+    print("[CENÁRIO 4] Detecção de Recusa de Campo")
     print_separator()
 
     state = SessionState(session_id="demo-4")
@@ -183,7 +183,7 @@ def demo_field_refusal():
 
 def demo_max_turns_bypass():
     """Cenário 5: Bypass do quality gate após 3 perguntas."""
-    print("[CENARIO CENÁRIO 5: Bypass Após Limite de Perguntas")
+    print("[CENÁRIO 5] Bypass Após Limite de Perguntas")
     print_separator()
 
     state = SessionState(session_id="demo-5")

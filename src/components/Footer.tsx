@@ -9,7 +9,7 @@ const Footer = () => {
             <div className="flex items-center gap-2 mb-4">
               <Building2 className="h-6 w-6 text-accent" />
               <span className="font-display text-xl font-semibold">
-                Nova<span className="text-accent">Lar</span>
+                Gran<span className="text-accent">Kasa</span>
               </span>
             </div>
             <p className="font-body text-primary-foreground/70 text-sm leading-relaxed">
@@ -34,7 +34,7 @@ const Footer = () => {
           </div>
         </div>
         <div className="border-t border-primary-foreground/10 mt-10 pt-6 text-center font-body text-xs text-primary-foreground/50">
-          © 2025 NovaLar Imóveis. Todos os direitos reservados.
+          © 2025 GranKasa Imóveis. Todos os direitos reservados.
         </div>
       </div>
     </footer>

@@ -2,7 +2,7 @@ from __future__ import annotations
 import unicodedata
 from enum import Enum, auto
 from typing import Optional
-from app.agent.state import SessionState
+from agent.state import SessionState
 
 
 def _norm(text: str) -> str:
@@ -110,7 +110,7 @@ def answer_faq(intent: FAQIntent, state: SessionState) -> str:
 
     if intent == FAQIntent.STATUS:
         missing = []
-        from app.agent.rules import missing_critical_fields
+        from agent.rules import missing_critical_fields
 
         pending = missing_critical_fields(state)
         if pending:

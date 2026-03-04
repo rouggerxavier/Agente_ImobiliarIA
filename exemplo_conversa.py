@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from dotenv import load_dotenv
 load_dotenv()
 
-from app.agent.controller import handle_message
+from agent.controller import handle_message
 
 def print_separator():
     print("\n" + "=" * 70 + "\n")

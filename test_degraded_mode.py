@@ -7,9 +7,9 @@ o sistema entra em degraded mode e usa fallback determinístico.
 
 import pytest
 from unittest.mock import Mock, patch
-from app.agent.controller import handle_message
-from app.agent.state import store
-from app.agent.llm import LLMServiceError, LLMErrorType, LLMUnavailableError
+from agent.controller import handle_message
+from agent.state import store
+from agent.llm import LLMServiceError, LLMErrorType, LLMUnavailableError
 import time
 
 
@@ -38,7 +38,7 @@ def test_degraded_mode_activated_on_503(clear_session):
         "retry_after_sec": 120.0
     }
 
-    with patch('app.agent.llm.call_llm') as mock_llm:
+    with patch('agent.llm.call_llm') as mock_llm:
         # Primeira chamada: simula 503
         mock_llm.side_effect = LLMServiceError(error_norm)
 
@@ -57,7 +57,7 @@ def test_degraded_mode_activated_on_503(clear_session):
         assert state.llm_last_error == LLMErrorType.NETWORK_ERROR.value
 
     # Segunda mensagem: não deve chamar LLM (está em degraded mode)
-    with patch('app.agent.llm.call_llm') as mock_llm2:
+    with patch('agent.llm.call_llm') as mock_llm2:
         mock_llm2.side_effect = Exception("LLM should not be called in degraded mode!")
 
         # Deve funcionar sem chamar LLM
@@ -90,7 +90,7 @@ def test_degraded_mode_timeout_recovery(clear_session):
     time.sleep(0.6)
 
     # Agora LLM deve ser chamado novamente
-    with patch('app.agent.llm.call_llm') as mock_llm:
+    with patch('agent.llm.call_llm') as mock_llm:
         mock_llm.return_value = {
             "intent": "alugar",
             "criteria": {},
@@ -123,7 +123,7 @@ def test_extraction_continues_in_degraded_mode(clear_session):
         "raw_message": "Service Unavailable",
     }
 
-    with patch('app.agent.llm.call_llm', side_effect=LLMServiceError(error_norm)):
+    with patch('agent.llm.call_llm', side_effect=LLMServiceError(error_norm)):
         # Primeira mensagem com dados
         handle_message(session_id, "Quero alugar")
         handle_message(session_id, "João Pessoa")
@@ -160,7 +160,7 @@ def test_quality_gate_works_in_degraded_mode(clear_session):
         "raw_message": "Service Unavailable",
     }
 
-    with patch('app.agent.llm.call_llm', side_effect=LLMServiceError(error_norm)):
+    with patch('agent.llm.call_llm', side_effect=LLMServiceError(error_norm)):
         # Preenche campos críticos
         handle_message(session_id, "Oi")
         handle_message(session_id, "Quero comprar")
@@ -196,7 +196,7 @@ def test_timeline_inference_in_degraded_mode(clear_session):
         "raw_message": "Service Unavailable",
     }
 
-    with patch('app.agent.llm.call_llm', side_effect=LLMServiceError(error_norm)):
+    with patch('agent.llm.call_llm', side_effect=LLMServiceError(error_norm)):
         handle_message(session_id, "Quero alugar")
         handle_message(session_id, "João Pessoa")
         handle_message(session_id, "Manaíra")
@@ -230,9 +230,9 @@ def test_lead_record_contains_degraded_flag(clear_session):
         "raw_message": "Service Unavailable",
     }
 
-    with patch('app.agent.llm.call_llm', side_effect=LLMServiceError(error_norm)):
+    with patch('agent.llm.call_llm', side_effect=LLMServiceError(error_norm)):
         # Mock de persistence
-        with patch('app.agent.persistence.append_lead') as mock_append:
+        with patch('agent.persistence.append_lead') as mock_append:
             # Preenche todos os campos
             handle_message(session_id, "Oi")
             handle_message(session_id, "Quero alugar")
