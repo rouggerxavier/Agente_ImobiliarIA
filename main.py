@@ -4,7 +4,6 @@ import logging
 from datetime import datetime
 from fastapi import FastAPI, Request, Depends, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
@@ -73,77 +72,6 @@ async def verify_api_key(x_api_key: str | None = Header(default=None, alias="X-A
         logger.warning("Tentativa de acesso ao /webhook com chave inválida")
         raise HTTPException(status_code=401, detail="Chave de API inválida ou ausente")
 
-
-@app.get("/")
-async def home():
-    """Home page with API status and useful links."""
-    timestamp = datetime.now().isoformat()
-    html_content = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Agente Imobiliário API</title>
-        <style>
-            body {{
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-                max-width: 800px;
-                margin: 50px auto;
-                padding: 20px;
-                background: #f5f5f5;
-            }}
-            .container {{
-                background: white;
-                padding: 30px;
-                border-radius: 8px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            }}
-            h1 {{ color: #333; margin-top: 0; }}
-            .status {{ color: #28a745; font-weight: bold; }}
-            .links {{ margin-top: 20px; }}
-            .links a {{
-                display: inline-block;
-                margin-right: 15px;
-                color: #007bff;
-                text-decoration: none;
-                padding: 8px 15px;
-                border: 1px solid #007bff;
-                border-radius: 4px;
-                transition: all 0.2s;
-            }}
-            .links a:hover {{
-                background: #007bff;
-                color: white;
-            }}
-            .info {{ margin-top: 20px; color: #666; font-size: 14px; }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>Agente Imobiliário API</h1>
-            <p class="status">Status: Online</p>
-            <div class="links">
-                <a href="/docs">API Documentation</a>
-                <a href="/health">Health Check</a>
-            </div>
-            <div class="info">
-                <p><strong>Endpoints disponíveis:</strong></p>
-                <ul>
-                    <li><code>GET /</code> - Esta página</li>
-                    <li><code>GET /health</code> - Health check</li>
-                    <li><code>POST /webhook</code> - Webhook do agente (requer X-API-Key)</li>
-                    <li><code>GET /webhook/whatsapp</code> - Verificação WhatsApp</li>
-                    <li><code>POST /webhook/whatsapp</code> - Eventos WhatsApp</li>
-                    <li><code>GET /docs</code> - Documentação interativa</li>
-                </ul>
-                <p style="margin-top: 20px;">
-                    <small>Timestamp: {timestamp}</small>
-                </p>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
-    return HTMLResponse(content=html_content)
 
 
 @app.get("/health")
