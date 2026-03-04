@@ -53,11 +53,6 @@ app.add_middleware(
 # Include routers
 app.include_router(whatsapp_router)
 
-# Serve React frontend (built files)
-_dist_path = os.path.join(os.path.dirname(__file__), "dist")
-if os.path.isdir(_dist_path):
-    app.mount("/", StaticFiles(directory=_dist_path, html=True), name="static")
-
 
 class WebhookRequest(BaseModel):
     session_id: str = Field(..., min_length=1, max_length=128)
@@ -196,6 +191,12 @@ async def webhook(body: WebhookRequest, request: Request):
     if isinstance(result, dict) and "reply" in result:
         return {"reply": result["reply"]}
     return result
+
+
+# Serve React frontend (built files) — must be last to not intercept API routes
+_dist_path = os.path.join(os.path.dirname(__file__), "dist")
+if os.path.isdir(_dist_path):
+    app.mount("/", StaticFiles(directory=_dist_path, html=True), name="static")
 
 
 if __name__ == "__main__":
