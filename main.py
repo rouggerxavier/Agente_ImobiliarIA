@@ -5,6 +5,7 @@ from datetime import datetime
 from fastapi import FastAPI, Request, Depends, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -51,6 +52,11 @@ app.add_middleware(
 
 # Include routers
 app.include_router(whatsapp_router)
+
+# Serve React frontend (built files)
+_dist_path = os.path.join(os.path.dirname(__file__), "dist")
+if os.path.isdir(_dist_path):
+    app.mount("/", StaticFiles(directory=_dist_path, html=True), name="static")
 
 
 class WebhookRequest(BaseModel):
