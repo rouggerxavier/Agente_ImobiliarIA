@@ -236,6 +236,37 @@ def build_summary_payload(state: SessionState, assigned_agent: Dict[str, Any] = 
         elif leisure_req == "no":
             lines.append(f"🏊  Área de lazer: não é essencial")
 
+    # Condomínio máximo
+    condo_max = state.criteria.condo_max or state.triage_fields.get("condo_max", {}).get("value")
+    if condo_max:
+        try:
+            condo_val = int(condo_max)
+            lines.append(f"🏢  Condomínio: até R$ {condo_val:,.0f}/mês".replace(",", "."))
+        except (ValueError, TypeError):
+            lines.append(f"🏢  Condomínio: {condo_max}")
+
+    # Forma de pagamento
+    payment_type = state.triage_fields.get("payment_type", {}).get("value")
+    if payment_type:
+        payment_labels = {
+            "financiamento": "financiamento",
+            "fgts": "FGTS",
+            "a_vista": "à vista",
+            "avista": "à vista",
+            "consorcio": "consórcio",
+        }
+        payment_txt = payment_labels.get(str(payment_type).lower(), str(payment_type))
+        lines.append(f"💳  Pagamento: {payment_txt}")
+
+    # Locação por temporada (Airbnb/short stay)
+    short_term = state.criteria.allows_short_term_rental or state.triage_fields.get("allows_short_term_rental", {}).get("value")
+    if short_term:
+        short_term_norm = str(short_term).lower().strip()
+        if short_term_norm == "yes":
+            lines.append("🏨  Locação por temporada: deve permitir (Airbnb/short stay)")
+        elif short_term_norm == "no":
+            lines.append("🏨  Locação por temporada: não deve permitir")
+
     # Preferências adicionais (floor, sun, pet, furnished)
     extras = []
     floor_pref = state.triage_fields.get("floor_pref", {}).get("value")

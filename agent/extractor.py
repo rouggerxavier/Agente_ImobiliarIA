@@ -471,6 +471,16 @@ def extract_criteria(message: str, known_neighborhoods: Iterable[str]) -> Dict[s
     if _has_short_term:
         result["allows_short_term_rental"] = "yes"
 
+    # === Forma de pagamento ===
+    if "financ" in lowered_plain or "financiamento" in lowered_plain:
+        result["payment_type"] = "financiamento"
+    elif "fgts" in lowered_plain:
+        result["payment_type"] = "fgts"
+    elif "a vista" in lowered_plain or "avista" in lowered_plain or "à vista" in text.lower():
+        result["payment_type"] = "a_vista"
+    elif "consorcio" in lowered_plain or "consórcio" in text.lower():
+        result["payment_type"] = "consorcio"
+
     # Intent explícita (comprar/alugar) — requer sinais fortes, excluindo contextos de temporada
     if "comprar" in lowered_plain or "compra" in lowered_plain or "investir" in lowered_plain:
         result["intent"] = "comprar"

@@ -145,6 +145,19 @@ def identify_quality_gaps(state: SessionState, quality: Dict[str, Any]) -> Quali
     )
 
 
+def _field_has_value_for_gap(state: SessionState, key: str) -> bool:
+    """Verifica se um campo de gap tem valor preenchido no state."""
+    if key in {"lead_name", "name"}:
+        return bool((state.lead_profile.get("name") or "").strip())
+    if key in {"lead_phone", "phone"}:
+        return bool((state.lead_profile.get("phone") or "").strip())
+    if hasattr(state.criteria, key):
+        val = getattr(state.criteria, key)
+    else:
+        val = state.triage_fields.get(key, {}).get("value")
+    return val is not None and str(val).strip() != ""
+
+
 def next_question_from_quality_gaps(state: SessionState, quality: Dict[str, Any]) -> Optional[str]:
     """
     Escolhe a próxima pergunta cirúrgica baseada nos gaps identificados.
@@ -172,8 +185,9 @@ def next_question_from_quality_gaps(state: SessionState, quality: Dict[str, Any]
         # Não perguntar se já perguntou muito recentemente (últimas 2 perguntas)
         if field == state.last_question_key:
             continue
-        # Perguntar se não foi perguntado ainda ou foi há muito tempo
-        if field not in state.asked_questions or state.asked_questions.count(field) == 0:
+        # Perguntar se não foi perguntado ainda, OU se foi perguntado mas não respondido
+        field_has_value = _field_has_value_for_gap(state, field)
+        if not field_has_value and state.asked_questions.count(field) < 3:
             return field
 
     # Prioridade 2: Campos críticos missing (seguindo CRITICAL_ORDER)
@@ -183,7 +197,8 @@ def next_question_from_quality_gaps(state: SessionState, quality: Dict[str, Any]
                 continue
             if field == state.last_question_key:
                 continue
-            if field not in state.asked_questions:
+            field_has_value = _field_has_value_for_gap(state, field)
+            if not field_has_value and state.asked_questions.count(field) < 3:
                 return field
 
     # Prioridade 3: Outros missing não críticos
@@ -193,7 +208,8 @@ def next_question_from_quality_gaps(state: SessionState, quality: Dict[str, Any]
                 continue
             if field == state.last_question_key:
                 continue
-            if field not in state.asked_questions:
+            field_has_value = _field_has_value_for_gap(state, field)
+            if not field_has_value and state.asked_questions.count(field) < 3:
                 return field
 
     # Prioridade 4: Campos ambíguos (ex: micro_location "orla")

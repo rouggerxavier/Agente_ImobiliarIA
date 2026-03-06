@@ -78,6 +78,7 @@ class SessionState:
     # Quality Gate fields
     quality_gate_turns: int = 0  # contador de perguntas de quality gate feitas
     field_refusals: Dict[str, int] = field(default_factory=dict)  # campos que o usuário recusou informar
+    _quality_gate_pending_field: Optional[str] = None  # gap do quality gate aguardando resposta
 
     # SLA fields
     hot_lead_emitted: bool = False  # se já emitiu evento HOT_LEAD para esta sessão

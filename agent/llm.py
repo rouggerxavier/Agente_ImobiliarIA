@@ -382,6 +382,42 @@ def _call_gemini_native(
     return str(response)
 
 
+def _extract_exception_status_code(exc: Exception) -> Optional[int]:
+    status = getattr(exc, "status_code", None)
+    if isinstance(status, int):
+        return status
+
+    response = getattr(exc, "response", None)
+    if response is not None:
+        status = getattr(response, "status_code", None)
+        if isinstance(status, int):
+            return status
+
+    msg = str(exc).lower()
+    if "503" in msg:
+        return 503
+    if "429" in msg:
+        return 429
+    return None
+
+
+def _is_transient_provider_exception(exc: Exception) -> bool:
+    status = _extract_exception_status_code(exc)
+    if status in {429, 500, 502, 503, 504}:
+        return True
+
+    msg = str(exc).lower()
+    transient_tokens = (
+        "unavailable",
+        "high demand",
+        "rate limit",
+        "timeout",
+        "temporar",
+        "connection",
+    )
+    return any(token in msg for token in transient_tokens)
+
+
 def _call_llm_gemini_native(
     system_prompt: str,
     user_message: str | Dict[str, Any],
@@ -470,14 +506,37 @@ def _call_llm_gemini_native(
 
         except Exception as exc:
             last_exception = exc
-            logger.error(
-                "Erro na chamada Gemini (tentativa %d/%d): %s - %s",
-                attempt + 1, max_retries, type(exc).__name__, exc,
-                exc_info=True,
-            )
+            is_transient = _is_transient_provider_exception(exc)
+            status_code = _extract_exception_status_code(exc)
             if attempt < max_retries - 1:
-                logger.warning("Tentando novamente...")
+                wait_s = min(8.0, 1.5 * (attempt + 1))
+                if is_transient:
+                    logger.warning(
+                        "Erro transitório Gemini (tentativa %d/%d, status=%s): %s. Retry em %.1fs.",
+                        attempt + 1,
+                        max_retries,
+                        status_code if status_code is not None else "n/a",
+                        exc,
+                        wait_s,
+                    )
+                    time.sleep(wait_s)
+                else:
+                    logger.warning(
+                        "Erro na chamada Gemini (tentativa %d/%d): %s - %s. Tentando novamente...",
+                        attempt + 1,
+                        max_retries,
+                        type(exc).__name__,
+                        exc,
+                    )
                 continue
+            logger.error(
+                "Erro final na chamada Gemini após %d tentativas (status=%s): %s - %s",
+                max_retries,
+                status_code if status_code is not None else "n/a",
+                type(exc).__name__,
+                exc,
+                exc_info=not is_transient,
+            )
             # Normaliza e lança erro estruturado
             normalized = {"type": LLMErrorType.UNKNOWN.value, "raw_message": str(exc), "exception_type": type(exc).__name__}
             raise LLMServiceError(normalized) from exc

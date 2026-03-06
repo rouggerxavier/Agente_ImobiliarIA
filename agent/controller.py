@@ -219,6 +219,34 @@ def _short_reply_updates(message: str, state: SessionState) -> Dict[str, Dict[st
             updates["lead_phone"] = {"value": message.strip(), "status": "confirmed", "source": "user", "raw_text": message}
             return updates
 
+    # NOVO: payment_type (financiamento, FGTS, à vista, consórcio)
+    if lk == "payment_type":
+        if any(kw in msg for kw in {"financ", "financiamento", "financiar"}):
+            updates["payment_type"] = {"value": "financiamento", "status": "confirmed", "source": "user", "raw_text": message}
+            return updates
+        if "fgts" in msg:
+            updates["payment_type"] = {"value": "fgts", "status": "confirmed", "source": "user", "raw_text": message}
+            return updates
+        if any(kw in msg for kw in {"a vista", "à vista", "avista", "dinheiro", "cash"}):
+            updates["payment_type"] = {"value": "a_vista", "status": "confirmed", "source": "user", "raw_text": message}
+            return updates
+        if any(kw in msg for kw in {"consorcio", "consórcio"}):
+            updates["payment_type"] = {"value": "consorcio", "status": "confirmed", "source": "user", "raw_text": message}
+            return updates
+
+    # NOVO: condo_max (valor máximo de condomínio)
+    if lk == "condo_max":
+        import re
+        match = re.search(r"(\d[\d.,]*)", msg)
+        if match:
+            raw = match.group(1).replace(".", "").replace(",", "")
+            try:
+                val = int(raw)
+                updates["condo_max"] = {"value": val, "status": "confirmed", "source": "user", "raw_text": message}
+                return updates
+            except ValueError:
+                pass
+
     # NOVO: allows_short_term_rental
     if lk == "allows_short_term_rental":
         if is_yes or any(kw in msg for kw in {"permite", "aceita", "libera", "sim", "airbnb", "temporada"}):
@@ -320,6 +348,52 @@ def _qa_answer_from_knowledge(message: str, state: SessionState, domain: Optiona
     if not sources:
         return kb["answer"]
     return kb["answer"] + "\n\nFontes internas: " + " | ".join(sources[:3])
+
+
+def _extract_update_value(payload: Any) -> Any:
+    if isinstance(payload, dict):
+        return payload.get("value")
+    return payload
+
+
+def _field_has_value(state: SessionState, key: Optional[str]) -> bool:
+    if not key:
+        return False
+    if key in {"intent", "operation"}:
+        return bool(state.intent)
+    if key in {"lead_name", "name"}:
+        return bool((state.lead_profile.get("name") or "").strip())
+    if key in {"lead_phone", "phone"}:
+        return bool((state.lead_profile.get("phone") or "").strip())
+
+    if hasattr(state.criteria, key):
+        val = getattr(state.criteria, key)
+    else:
+        val = state.triage_fields.get(key, {}).get("value")
+    return val is not None and str(val).strip() != ""
+
+
+def _parallel_update_ack(extracted_updates: Dict[str, Any], pending_field: Optional[str]) -> Optional[str]:
+    """
+    Gera confirmação curta quando usuário traz preferência paralela
+    enquanto ainda falta responder o campo pendente.
+    """
+    if not extracted_updates:
+        return None
+
+    short_term_keys = {"allows_short_term_rental", "airbnb_allowed", "short_term_rental_allowed"}
+    for key in short_term_keys:
+        if key == pending_field or key not in extracted_updates:
+            continue
+        val = _extract_update_value(extracted_updates.get(key))
+        if isinstance(val, str):
+            norm = val.strip().lower()
+            if norm == "yes":
+                return "Perfeito, anotei que você quer condomínio que permita locação por temporada (Airbnb)."
+            if norm == "no":
+                return "Perfeito, anotei que você prefere condomínio que não permita locação por temporada."
+
+    return None
 
 
 def _avoid_repeat_question(state: SessionState, proposed_key: Optional[str]) -> Optional[str]:
@@ -759,24 +833,78 @@ def handle_message(session_id: str, message: str, name: str | None = None, corre
             state.history.append({"role": "assistant", "text": reply})
             return {"reply": reply, "state": state.to_public_dict()}
 
-        # === QUALITY GATE ===
-        # Verifica se quality_score permite handoff
+        # Campo pendente sem resposta: se o usuário trouxe outra preferência útil,
+        # confirma o que foi capturado e repete a pergunta pendente (uma vez).
         from .quality_gate import should_handoff, next_question_from_quality_gaps, detect_field_refusal, mark_field_refusal
 
+        pending_field = state.pending_field
+        pending_unanswered = pending_field and not _field_has_value(state, pending_field)
+        has_parallel_updates = any(
+            key != pending_field and _extract_update_value(payload) is not None
+            for key, payload in extracted_updates.items()
+        )
+
+        if pending_unanswered and has_parallel_updates and not detect_field_refusal(message):
+            ask_count = state.field_ask_count.get(pending_field, 0)
+            if ask_count < 2:
+                question = _question_text_for_key(pending_field, state)
+                ack = _parallel_update_ack(extracted_updates, pending_field)
+                reply = f"{ack}\n\n{question}" if ack else question
+
+                state.last_question_key = pending_field
+                state.pending_field = pending_field
+                state.field_ask_count[pending_field] = ask_count + 1
+                state.last_bot_utterance = reply
+                if pending_field not in state.asked_questions:
+                    state.asked_questions.append(pending_field)
+                state.history.append({"role": "assistant", "text": reply})
+                logger.info("PENDING_FIELD reasked: %s (ask_count=%d)", pending_field, state.field_ask_count[pending_field])
+                return {"reply": reply, "state": state.to_public_dict()}
+
+        # === QUALITY GATE ===
+        # Verifica se quality_score permite handoff
         quality = compute_quality_score(state)
 
         # Detectar recusa antes de aplicar gate
         if detect_field_refusal(message) and state.last_question_key:
             mark_field_refusal(state, state.last_question_key)
 
+        # Se o gap pendente (quality gate anterior) NÃO foi respondido,
+        # reconhecer info paralela e re-perguntar o gap
+        prev_qg_field = getattr(state, '_quality_gate_pending_field', None)
+        if prev_qg_field and not _field_has_value(state, prev_qg_field):
+            # O gap anterior não foi respondido — NÃO contar como turn efetivo
+            # Se houve updates paralelos, reconhecer + re-perguntar
+            if has_parallel_updates and not detect_field_refusal(message):
+                ask_count = state.field_ask_count.get(prev_qg_field, 0)
+                if ask_count < 3:  # Até 3 tentativas para quality gate gaps
+                    question = _question_text_for_key(prev_qg_field, state)
+                    ack = _parallel_update_ack(extracted_updates, prev_qg_field)
+                    reply = f"{ack}\n\n{question}" if ack else question
+                    state.last_question_key = prev_qg_field
+                    state.pending_field = prev_qg_field
+                    state._quality_gate_pending_field = prev_qg_field
+                    state.field_ask_count[prev_qg_field] = ask_count + 1
+                    state.last_bot_utterance = reply
+                    state.history.append({"role": "assistant", "text": reply})
+                    logger.info("QUALITY_GATE re-ask unanswered gap: %s (ask_count=%d)", prev_qg_field, state.field_ask_count[prev_qg_field])
+                    return {"reply": reply, "state": state.to_public_dict()}
+        elif prev_qg_field and _field_has_value(state, prev_qg_field):
+            # O gap anterior FOI respondido — agora sim conta como turn efetivo
+            state.quality_gate_turns += 1
+            state._quality_gate_pending_field = None
+
         if not should_handoff(state, quality):
             # Quality gate bloqueou handoff - fazer pergunta cirúrgica
             next_key = next_question_from_quality_gaps(state, quality)
             if next_key:
-                state.quality_gate_turns += 1
+                if not prev_qg_field:
+                    # Primeira pergunta de quality gate — conta como turn
+                    state.quality_gate_turns += 1
                 question = _question_text_for_key(next_key, state)
                 state.last_question_key = next_key
                 state.pending_field = next_key  # Rastreia campo sendo coletado
+                state._quality_gate_pending_field = next_key  # Rastreia gap do quality gate
                 state.field_ask_count[next_key] = state.field_ask_count.get(next_key, 0) + 1
                 state.last_bot_utterance = question
                 if next_key not in state.asked_questions:
