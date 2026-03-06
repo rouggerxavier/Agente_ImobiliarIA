@@ -3,6 +3,7 @@ import unicodedata
 from enum import Enum, auto
 from typing import Optional
 from agent.state import SessionState
+from agent.knowledge_base import answer_question
 
 
 def _norm(text: str) -> str:
@@ -34,6 +35,26 @@ KEYWORDS = {
 
 QUESTION_CUES = ("?", "como ", "quanto", "pode", "aceita", "precisa", "quando")
 
+INTENT_TOPIC_MAP = {
+    FAQIntent.FINANCIAMENTO: "financiamento",
+    FAQIntent.FGTS: "financiamento",
+    FAQIntent.DOCUMENTOS: "glossario",
+    FAQIntent.TAXAS: "custos",
+    FAQIntent.PRAZO: "processo_compra",
+    FAQIntent.VISITA: "visita",
+    FAQIntent.NEGOCIACAO: "processo_compra",
+}
+
+INTENT_PREFIX = {
+    FAQIntent.FINANCIAMENTO: "Sobre financiamento, ",
+    FAQIntent.FGTS: "Sobre FGTS, ",
+    FAQIntent.DOCUMENTOS: "Sobre documentacao, ",
+    FAQIntent.TAXAS: "Sobre custos e taxas, ",
+    FAQIntent.PRAZO: "Sobre prazo, ",
+    FAQIntent.VISITA: "Sobre visita, ",
+    FAQIntent.NEGOCIACAO: "Sobre negociacao, ",
+}
+
 
 def detect_faq_intent(user_text: str) -> Optional[FAQIntent]:
     if not user_text:
@@ -58,10 +79,35 @@ def _maybe(field: Optional[str], prefix: str) -> str:
     return f"{prefix}{field}" if field else ""
 
 
-def answer_faq(intent: FAQIntent, state: SessionState) -> str:
+def _format_sources(sources: list[str]) -> str:
+    if not sources:
+        return ""
+    return "\n\nFontes internas: " + " | ".join(sources[:3])
+
+
+def answer_faq(intent: FAQIntent, state: SessionState, user_text: Optional[str] = None) -> str:
     city = state.criteria.city
     intent_op = state.intent
     budget = state.criteria.budget
+
+    # Camada 1: tenta responder via base de conhecimento antes do fallback fixo.
+    # Mantemos STATUS fora desse fluxo porque depende mais do estado da sessao.
+    if user_text and intent != FAQIntent.STATUS:
+        topic = INTENT_TOPIC_MAP.get(intent)
+        kb = answer_question(
+            user_text,
+            city=state.criteria.city,
+            neighborhood=state.criteria.neighborhood,
+            domain="institutional",
+            topic=topic,
+            top_k=3,
+        )
+        if kb:
+            answer = kb["answer"]
+            prefix = INTENT_PREFIX.get(intent, "")
+            if prefix and not _norm(answer).startswith(_norm(prefix)):
+                answer = prefix + answer
+            return answer + _format_sources(kb.get("sources", []))
 
     if intent == FAQIntent.FINANCIAMENTO:
         extra = ""

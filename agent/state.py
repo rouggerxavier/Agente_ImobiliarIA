@@ -3,7 +3,7 @@ import time
 import unicodedata
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any, Tuple
-import time
+from .geo_normalizer import canonical_city, canonical_neighborhood
 
 
 @dataclass
@@ -30,6 +30,7 @@ class LeadCriteria:
     leisure_features: Optional[List[str]] = None
     leisure_required: Optional[str] = None  # yes|no|indifferent
     leisure_level: Optional[str] = None  # simple|ok|full|indifferent
+    allows_short_term_rental: Optional[str] = None  # yes|no|unknown — restrição do imóvel/condomínio (ex: Airbnb)
 
     @property
     def budget_max(self) -> Optional[int]:
@@ -174,6 +175,8 @@ class SessionState:
             "suites_min": ("suites", value),
             "parking_min": ("parking", value),
             "timeline_bucket": ("timeline", value),
+            "short_term_rental_allowed": ("allows_short_term_rental", value),
+            "airbnb_allowed": ("allows_short_term_rental", value),
         }
         return alias.get(key, (key, value))
 
@@ -189,6 +192,10 @@ class SessionState:
         if key in {"furnished", "pet"}:
             bool_val = self._normalize_boolean(value)
             value = bool_val if bool_val is not None else value
+        if key == "city":
+            value = canonical_city(str(value)) if value is not None else None
+        if key == "neighborhood":
+            value = canonical_neighborhood(str(value)) if value is not None else None
         return key, value
 
     # === Mutators ===
@@ -211,6 +218,10 @@ class SessionState:
         if key in {"furnished", "pet"}:
             bool_val = self._normalize_boolean(value)
             value = bool_val if bool_val is not None else value
+        if key == "city":
+            value = canonical_city(str(value)) if value is not None else None
+        if key == "neighborhood":
+            value = canonical_neighborhood(str(value)) if value is not None else None
 
         if hasattr(self.criteria, key) and value is not None:
             setattr(self.criteria, key, value)

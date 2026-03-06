@@ -18,6 +18,56 @@ from typing import Any, Dict, Optional, List, Tuple, Union
 from dotenv import load_dotenv
 from openai import OpenAI, OpenAIError
 
+
+def _repair_truncated_json(raw: str) -> Optional[Dict[str, Any]]:
+    """
+    Tenta reparar JSON truncado completando chaves/colchetes faltantes.
+    Retorna o dict parseado ou None se não for possível reparar.
+    """
+    # Remove markdown fences
+    cleaned = raw.strip()
+    if cleaned.startswith("```"):
+        lines = cleaned.split("\n")
+        lines = lines[1:] if len(lines) > 1 else lines
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        cleaned = "\n".join(lines).strip()
+
+    # Tenta parse direto primeiro
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        pass
+
+    # Tenta completar: conta chaves abertas e fecha
+    open_braces = cleaned.count("{") - cleaned.count("}")
+    open_brackets = cleaned.count("[") - cleaned.count("]")
+
+    if open_braces < 0 or open_brackets < 0:
+        # Mais fechamentos que aberturas — truncado antes de começar, não tem reparo fácil
+        return None
+
+    # Remove vírgula ou caractere inválido no final antes de fechar
+    tail = cleaned.rstrip()
+    if tail and tail[-1] in {",", ":"}:
+        tail = tail[:-1]
+
+    # Fecha strings abertas (heurística simples)
+    quote_count = tail.count('"') - tail.count('\\"')
+    if quote_count % 2 != 0:
+        tail += '"'
+
+    # Fecha arrays e objetos
+    tail += "]" * open_brackets
+    tail += "}" * open_braces
+
+    try:
+        return json.loads(tail)
+    except json.JSONDecodeError:
+        pass
+
+    return None
+
 load_dotenv(override=True)
 
 
@@ -366,32 +416,54 @@ def _call_llm_gemini_native(
 
             # Se esperamos JSON, faz parse
             if response_format == "json_object":
+                # Remove markdown code blocks se existirem (```json ... ```)
+                cleaned_content = content.strip()
+                if cleaned_content.startswith("```"):
+                    lines = cleaned_content.split("\n")
+                    lines = lines[1:] if len(lines) > 1 else lines
+                    if lines and lines[-1].strip() == "```":
+                        lines = lines[:-1]
+                    cleaned_content = "\n".join(lines).strip()
+
+                # Verifica se JSON parece truncado (não termina com } ou ])
+                if not cleaned_content.endswith("}") and not cleaned_content.endswith("]"):
+                    if attempt < max_retries - 1:
+                        logger.warning(
+                            "⚠ JSON TRUNCADO (tentativa %d/%d) — %d chars gerados, cortou em: '...%s'",
+                            attempt + 1, max_retries, len(cleaned_content), cleaned_content[-60:].replace("\n", " ")
+                        )
+                        continue
+                    # Tenta reparar antes de desistir
+                    repaired = _repair_truncated_json(cleaned_content)
+                    if repaired is not None:
+                        logger.warning(
+                            "⚠ JSON TRUNCADO REPARADO — %d chars, max_tokens=%s",
+                            len(cleaned_content), max_tokens
+                        )
+                        return repaired
+                    logger.error(
+                        "🔴 JSON TRUNCADO IRREPARÁVEL após %d tentativas — %d chars, max_tokens=%s. "
+                        "Usando fallback vazio.",
+                        max_retries, len(cleaned_content), max_tokens
+                    )
+                    return {}
+
                 try:
-                    # Remove markdown code blocks se existirem (```json ... ```)
-                    cleaned_content = content.strip()
-                    if cleaned_content.startswith("```"):
-                        # Remove primeira linha (```json ou ```)
-                        lines = cleaned_content.split("\n")
-                        lines = lines[1:] if len(lines) > 1 else lines
-                        # Remove última linha se for ```)
-                        if lines and lines[-1].strip() == "```":
-                            lines = lines[:-1]
-                        cleaned_content = "\n".join(lines).strip()
-
-                    # Verifica se JSON parece truncado (não termina com } ou ])
-                    if not cleaned_content.endswith("}") and not cleaned_content.endswith("]"):
-                        if attempt < max_retries - 1:
-                            logger.warning("JSON parece truncado, tentando novamente (%d/%d)", attempt + 1, max_retries)
-                            continue
-                        raise RuntimeError(f"Gemini retornou JSON truncado após {max_retries} tentativas: {content}")
-
                     return json.loads(cleaned_content)
                 except json.JSONDecodeError as exc:
-                    # Se falhou no parse JSON, tenta novamente
+                    # Tenta reparar antes de desistir
+                    repaired = _repair_truncated_json(cleaned_content)
+                    if repaired is not None:
+                        logger.warning("⚠ JSON INVÁLIDO REPARADO na tentativa %d/%d", attempt + 1, max_retries)
+                        return repaired
                     if attempt < max_retries - 1:
-                        logger.warning("JSON inválido, tentando novamente (%d/%d)", attempt + 1, max_retries)
+                        logger.warning(
+                            "⚠ JSON INVÁLIDO (tentativa %d/%d) — erro: %s | trecho: '...%s'",
+                            attempt + 1, max_retries, exc, cleaned_content[-60:].replace("\n", " ")
+                        )
                         continue
-                    raise RuntimeError(f"Gemini retornou JSON inválido após {max_retries} tentativas: {content}") from exc
+                    logger.error("🔴 JSON INVÁLIDO após %d tentativas — erro: %s. Usando fallback vazio.", max_retries, exc)
+                    return {}
 
             # Caso contrário retorna texto em dict
             return {"response": content}
@@ -508,13 +580,18 @@ def call_llm(
             if response_format == "json_object":
                 try:
                     return json.loads(content)
-                except json.JSONDecodeError as exc:
-                    # Se falhou no parse JSON, tenta novamente
+                except json.JSONDecodeError:
+                    # Tenta reparar
+                    repaired = _repair_truncated_json(content or "")
+                    if repaired is not None:
+                        logger.warning("⚠ JSON INVÁLIDO REPARADO na tentativa %d/%d", attempt + 1, max_retries)
+                        return repaired
                     if attempt < max_retries - 1:
                         logger.warning("JSON inválido, tentando novamente (%d/%d)", attempt + 1, max_retries)
                         continue
-                    raise RuntimeError(f"LLM retornou JSON inválido após {max_retries} tentativas: {content}") from exc
-            
+                    logger.error("🔴 JSON INVÁLIDO após %d tentativas. Usando fallback vazio.", max_retries)
+                    return {}
+
             # Caso contrário retorna texto em dict
             return {"response": content}
             
@@ -828,7 +905,7 @@ def llm_decide(
             system_prompt=system_prompt,
             user_message=payload,
             temperature=0.3,
-            max_tokens=2048,  # Aumentado para evitar truncamento de JSON
+            max_tokens=4096,  # Aumentado para evitar truncamento de JSON em respostas longas
             max_retries=3  # Mais tentativas para lidar com erros transitórios
         )
 
@@ -866,10 +943,18 @@ def llm_decide(
             _set_rate_limit(cooldown)
             cooldown_applied = True
 
+        _err_icons = {
+            LLMErrorType.RATE_LIMIT_RPM.value: "⏳ RATE_LIMIT (req/min)",
+            LLMErrorType.RATE_LIMIT_TPM.value: "⏳ RATE_LIMIT (tokens/min)",
+            LLMErrorType.QUOTA_EXHAUSTED_DAILY.value: "🚫 QUOTA_DIÁRIA_ESGOTADA",
+            LLMErrorType.NETWORK_TIMEOUT.value: "🌐 TIMEOUT de rede",
+            LLMErrorType.UNKNOWN.value: "❓ ERRO DESCONHECIDO",
+        }
+        _err_label = _err_icons.get(err_type, f"⚠ {err_type}")
         logger.error(
-            f"[LLM_ERROR] type={err_type} http={http_status} provider={norm.get('provider')} "
-            f"model={LLM_MODEL} retry_after={retry_after} cooldown_applied={cooldown_applied} "
-            f"correlation={correlation_id}"
+            "🔴 LLM_ERROR %s | model=%s http=%s retry_after=%s cooldown=%ss  (correlation=%s)",
+            _err_label, LLM_MODEL, http_status, retry_after,
+            f"{cooldown:.0f}" if cooldown_applied else "não", correlation_id
         )
 
         # CIRCUIT BREAKER: Se erro transitório, ativar degraded mode
@@ -903,7 +988,15 @@ def llm_decide(
 
     except Exception as e:
         error_str = str(e)
-        logger.error(f"[LLM_ERROR] type={LLMErrorType.UNKNOWN.value} detail={error_str} correlation={correlation_id}")
+        # Classifica erros comuns de forma descritiva
+        if "quota" in error_str.lower() or "resource_exhausted" in error_str.lower():
+            logger.error("🚫 QUOTA_ESGOTADA — modelo=%s  (correlation=%s)", LLM_MODEL, correlation_id)
+        elif "truncat" in error_str.lower() or "json" in error_str.lower():
+            logger.error("🔴 JSON_TRUNCADO — tokens insuficientes (max_tokens=%s) — modelo=%s  (correlation=%s)", 4096, LLM_MODEL, correlation_id)
+        elif "timeout" in error_str.lower() or "timed out" in error_str.lower():
+            logger.error("🌐 TIMEOUT — modelo=%s  (correlation=%s)", LLM_MODEL, correlation_id)
+        else:
+            logger.error("❓ LLM_ERROR — %s  (correlation=%s)", error_str[:200], correlation_id)
         return _get_fallback_decision(message, state_summary, triage_flag), False
 
 

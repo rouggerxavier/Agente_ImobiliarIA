@@ -11,10 +11,10 @@ from __future__ import annotations
 import json
 import os
 import threading
-import unicodedata
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional, Iterator
 from pathlib import Path
+from .geo_normalizer import location_key
 
 
 # Lock para escrita atômica
@@ -281,7 +281,7 @@ def next_followup_message(lead: Dict[str, Any], followup_history: Dict[str, List
 
     # === SUGESTÃO DE BAIRROS (se neighborhood ausente e já tentou antes) ===
     if not neighborhood and "neighborhood_suggest" not in sent_followups and "neighborhood" in sent_followups:
-        normalized_city = unicodedata.normalize("NFKD", str(city or "")).encode("ascii", "ignore").decode("ascii").lower().strip()
+        normalized_city = location_key(str(city or ""))
         if normalized_city in {"joao pessoa", "jp"}:
             return {
                 "message_text": (

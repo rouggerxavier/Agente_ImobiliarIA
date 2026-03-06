@@ -1,14 +1,14 @@
 ﻿from __future__ import annotations
 import re
-import unicodedata
 from typing import Dict, Iterable, Optional, Set, Any, TYPE_CHECKING
+from .geo_normalizer import CITY_ALIASES, canonical_neighborhood, location_key, strip_accents
 
 if TYPE_CHECKING:
     from .state import SessionState
 
 
 def _strip_accents(text: str) -> str:
-    return unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
+    return strip_accents(text)
 
 
 PROPERTY_TYPES = {
@@ -21,14 +21,8 @@ PROPERTY_TYPES = {
     "terreno": ["terreno", "lote"],
 }
 
-CITY_ALIASES = {
-    "joao pessoa": "Joao Pessoa",
-    "jp": "Joao Pessoa",
-    "campina grande": "Campina Grande",
-    "recife": "Recife",
-    "natal": "Natal",
-    "cabedelo": "Cabedelo",
-}
+def _normalize_location(text: str) -> str:
+    return location_key(text)
 
 
 def _parse_currency(fragment: str, suffix: Optional[str]) -> int:
@@ -91,9 +85,10 @@ def _parse_budget_value(text: str) -> Optional[int]:
     Ex: "1 milhão e 200 mil", "1.2 milhões", "900k", "R$ 800.000"
     """
     lowered = _strip_accents(text.lower()).strip()
+    lowered = lowered.replace("r$", "").strip()
 
     # Padrão "X milhão/milhões e Y mil" (ex: "1 milhão e 200 mil" = 1.200.000)
-    complex_pattern = r"(\d+(?:[\.,]\d+)?)\s*(?:mi|milhao|milhoes|m)\s*(?:e)?\s*(\d+)\s*mil"
+    complex_pattern = r"(\d+(?:[\.,]\d+)?)\s*(?:mi|milhao|milhoes)\s*(?:e)?\s*(\d+)\s*mil"
     m = re.search(complex_pattern, lowered)
     if m:
         milhoes = float(m.group(1).replace(",", "."))
@@ -103,7 +98,7 @@ def _parse_budget_value(text: str) -> Optional[int]:
     # Padrão simples: número + sufixo
     simple_patterns = [
         r"r\$\s*(\d+)\.(\d{3})\.(\d{3})",  # R$ 1.200.000
-        r"(\d+(?:[\.,]\d+)?)\s*(mi|milhao|milhoes|m|mil|k)\b",  # 1.2 milhão, 900k
+        r"(\d+(?:[\.,]\d+)?)\s*(mi|milhao|milhoes|m|mil|k)\b",  # 1.2 milhão, 900k, 1.1m
     ]
 
     for pattern in simple_patterns:
@@ -113,6 +108,13 @@ def _parse_budget_value(text: str) -> Optional[int]:
                 return int(m.group(1) + m.group(2) + m.group(3))
             else:
                 return _parse_currency(m.group(1), m.group(2))
+
+    # Fallback para número simples sem sufixo (ex: 450000, 1800, 1.800)
+    fallback_num = re.search(r"([\d\.,]+)", lowered)
+    if fallback_num:
+        parsed = _parse_currency(fallback_num.group(1), None)
+        if parsed > 0:
+            return parsed
 
     return None
 
@@ -133,17 +135,19 @@ def parse_budget_range(text: str) -> Dict[str, Any]:
 
     # Padrões de range explícitos - capturar tudo entre os delimitadores
     # Ordem dos sufixos: mais longos primeiro para evitar match parcial
-    suffix_pattern = r"(?:milhoes|milhao|mil|mi|m|k)"
+    # suffix_pattern (sem "m") evita confundir "3m" de timeline com orçamento.
+    suffix_pattern = r"(?:milhoes|milhao|mil|mi|k)"
+    range_suffix_pattern = r"(?:milhoes|milhao|mil|mi|m|k)"
 
     range_patterns = [
         # "entre X [sufixo] (e|a|ate) Y [sufixo com possível 'e Z mil']"
-        rf"(?:entre|de)\s+([\d\.,]+\s*{suffix_pattern}?)\s+(?:e|a|ate|até)\s+([\d\.,]+\s*{suffix_pattern}?(?:\s+e\s+\d+\s+mil)?)",
+        rf"(?:entre|de)\s+([\d\.,]+\s*{range_suffix_pattern}?)\s+(?:e|a|ate|até)\s+([\d\.,]+\s*{range_suffix_pattern}?(?:\s+e\s+\d+\s+mil)?)",
         # "X [sufixo] até/ate Y [sufixo]" (pattern separado para pegar "X até Y")
-        rf"([\d\.,]+\s*{suffix_pattern}?)\s+(?:ate|até)\s+([\d\.,]+\s*{suffix_pattern}?(?:\s+e\s+\d+\s+mil)?)",
+        rf"([\d\.,]+\s*{range_suffix_pattern}?)\s+(?:ate|até)\s+([\d\.,]+\s*{range_suffix_pattern}?(?:\s+e\s+\d+\s+mil)?)",
         # "X [sufixo] a Y [sufixo]" (sem "entre" ou "de")
-        rf"([\d\.,]+\s*{suffix_pattern})\s+a\s+([\d\.,]+\s*{suffix_pattern}?(?:\s+e\s+\d+\s+mil)?)",
+        rf"([\d\.,]+\s*{range_suffix_pattern})\s+a\s+([\d\.,]+\s*{range_suffix_pattern}?(?:\s+e\s+\d+\s+mil)?)",
         # "X [sufixo] - Y [sufixo]" ou "X~Y"
-        rf"([\d\.,]+\s*{suffix_pattern}?)\s*[-~]\s+([\d\.,]+\s*{suffix_pattern}?(?:\s+e\s+\d+\s+mil)?)",
+        rf"([\d\.,]+\s*{range_suffix_pattern}?)\s*[-~]\s+([\d\.,]+\s*{range_suffix_pattern}?(?:\s+e\s+\d+\s+mil)?)",
     ]
 
     for pattern in range_patterns:
@@ -176,21 +180,38 @@ def parse_budget_range(text: str) -> Dict[str, Any]:
         value = int(m.group(1) + m.group(2) + m.group(3))
         all_values.append(value)
 
-    # Se encontrou múltiplos valores, verificar contexto
-    if len(all_values) >= 2:
-        # Pegar os 2 valores mais distintos
-        unique_vals = sorted(set(all_values))
-        if len(unique_vals) >= 2:
-            # Range implícito detectado
-            return {
-                "budget_min": unique_vals[0],
-                "budget_max": unique_vals[-1],
-                "is_range": True,
-                "raw_matches": unique_vals
-            }
+    # R$ genérico (ex: R$ 1800, R$ 450000, R$ 1.800)
+    for m in re.finditer(r"r\$\s*([\d\.,]+)", lowered):
+        value = _parse_currency(m.group(1), None)
+        if value > 0:
+            all_values.append(value)
 
-    # Se encontrou apenas 1 valor, verificar contexto (max-only vs min-only)
-    if len(all_values) == 1:
+    # Número em contexto de orçamento sem R$ (ex: "orcamento ate 450000")
+    context_patterns = [
+        r"(?:orcamento|orçamento|faixa|valor)\s*(?:mensal)?\s*(?:de|em|ate|até|maximo|máximo|limite)?\s*([\d\.,]+(?:\s*(?:milhoes|milhao|mil|mi|k))?)",
+        r"(?:ate|até|maximo|máximo|limite)\s*(?:de)?\s*([\d\.,]+(?:\s*(?:milhoes|milhao|mil|mi|k))?)\s*(?:por mes|mensal)?",
+        r"(?:por mes|mensal)\s*(?:de)?\s*([\d\.,]+(?:\s*(?:milhoes|milhao|mil|mi|k))?)",
+    ]
+    for pattern in context_patterns:
+        for m in re.finditer(pattern, lowered, re.IGNORECASE):
+            parsed = _parse_budget_value(m.group(1))
+            if parsed and parsed > 0:
+                all_values.append(parsed)
+
+    unique_vals = sorted(set(all_values))
+
+    # Se encontrou múltiplos valores distintos, interpretar como range
+    if len(unique_vals) >= 2:
+        return {
+            "budget_min": unique_vals[0],
+            "budget_max": unique_vals[-1],
+            "is_range": True,
+            "raw_matches": unique_vals,
+        }
+
+    # Se encontrou apenas 1 valor distinto, verificar contexto (max-only vs min-only)
+    if len(unique_vals) == 1:
+        single_value = unique_vals[0]
         # Padrão "até X" / "máximo X" (apenas max)
         max_patterns = [
             rf"(?:ate|até|teto|maximo|max|limite)\s+(?:de\s+)?([\d\.,]+\s*{suffix_pattern}?(?:\s+e\s+\d+\s+mil)?)",
@@ -200,9 +221,9 @@ def parse_budget_range(text: str) -> Dict[str, Any]:
             if re.search(pattern, lowered, re.IGNORECASE):
                 return {
                     "budget_min": None,
-                    "budget_max": all_values[0],
+                    "budget_max": single_value,
                     "is_range": False,
-                    "raw_matches": all_values
+                    "raw_matches": unique_vals,
                 }
 
         # Padrão "a partir de X" / "mínimo X" (apenas min)
@@ -212,18 +233,18 @@ def parse_budget_range(text: str) -> Dict[str, Any]:
         for pattern in min_patterns:
             if re.search(pattern, lowered, re.IGNORECASE):
                 return {
-                    "budget_min": all_values[0],
+                    "budget_min": single_value,
                     "budget_max": None,
                     "is_range": False,
-                    "raw_matches": all_values
+                    "raw_matches": unique_vals,
                 }
 
         # Sem contexto específico, assumir budget_max (comportamento legado)
         return {
             "budget_min": None,
-            "budget_max": all_values[0],
+            "budget_max": single_value,
             "is_range": False,
-            "raw_matches": all_values
+            "raw_matches": unique_vals,
         }
 
     # Nenhum valor encontrado
@@ -266,7 +287,7 @@ def detect_type(text: str) -> Optional[str]:
 
 
 def detect_city(text: str) -> Optional[str]:
-    normalized = _strip_accents(text.lower())
+    normalized = _normalize_location(text)
     for alias, canonical in CITY_ALIASES.items():
         if re.search(rf"\b{re.escape(alias)}\b", normalized):
             return canonical
@@ -283,10 +304,17 @@ def resolve_city(user_text: str, session_state: "SessionState") -> Optional[str]
 
 
 def detect_neighborhood(text: str, known: Iterable[str]) -> Optional[str]:
-    normalized = _strip_accents(text.lower())
-    for bairro in known:
-        if bairro and _strip_accents(bairro.lower()) in normalized:
-            return bairro
+    normalized = _normalize_location(text)
+    # Prefer longer names first to avoid partial/ambiguous matches.
+    ordered = sorted(
+        [b for b in known if b],
+        key=lambda b: len(_normalize_location(str(b))),
+        reverse=True,
+    )
+    for bairro in ordered:
+        bkey = _normalize_location(str(bairro))
+        if bkey and re.search(rf"\b{re.escape(bkey)}\b", normalized):
+            return canonical_neighborhood(str(bairro), known=known)
     return None
 
 
@@ -368,6 +396,59 @@ def extract_sun_preference(text: str) -> Optional[str]:
     return None
 
 
+def extract_timeline(text: str) -> Optional[str]:
+    """
+    Extrai janela temporal de compra/aluguel em buckets:
+    30d | 3m | 6m | 12m | flexivel
+    """
+    lowered = _strip_accents(text.lower())
+    compact = lowered.strip()
+
+    if any(token in lowered for token in {"flexivel", "sem pressa", "sem urgencia", "pode esperar"}):
+        return "flexivel"
+
+    # Aceita resposta curta direta: "30d", "6m", "3 meses"
+    day_match = re.fullmatch(r"(\d{1,2})\s*(?:d|dia|dias)", compact)
+    if not day_match:
+        day_match = re.search(
+            r"(?:prazo|mudanca|mudar|entrega|quando|tempo|em)\s*(?:de|para|em)?\s*(\d{1,2})\s*(?:d|dia|dias)\b",
+            lowered,
+        )
+    if day_match:
+        days = int(day_match.group(1))
+        if days <= 45:
+            return "30d"
+        if days <= 120:
+            return "3m"
+        if days <= 240:
+            return "6m"
+        return "12m"
+
+    month_match = re.fullmatch(r"(\d{1,2})\s*(?:m|mes|meses)", compact)
+    if not month_match:
+        month_match = re.search(
+            r"(?:prazo|mudanca|mudar|entrega|quando|tempo|em)\s*(?:de|para|em)?\s*(\d{1,2})\s*(?:m|mes|meses)\b",
+            lowered,
+        )
+    if month_match:
+        months = int(month_match.group(1))
+        if months <= 2:
+            return "30d"
+        if months <= 4:
+            return "3m"
+        if months <= 8:
+            return "6m"
+        return "12m"
+
+    if any(token in lowered for token in {"imediato", "agora", "urgente", "o quanto antes", "asap"}):
+        return "30d"
+    if "proximo mes" in lowered:
+        return "30d"
+    if any(token in lowered for token in {"este ano", "esse ano", "ano que vem"}):
+        return "12m"
+    return None
+
+
 def extract_criteria(message: str, known_neighborhoods: Iterable[str]) -> Dict[str, object]:
     text = message
     result: Dict[str, object] = {}
@@ -377,10 +458,23 @@ def extract_criteria(message: str, known_neighborhoods: Iterable[str]) -> Dict[s
     # Detecta "indiferente" global (aplicável a qualquer pergunta)
     is_indifferent = detect_indifferent(text)
 
-    # Intent explícita (comprar/alugar)
+    # === REGRA ANTI-CONFUSÃO: temporada/Airbnb ≠ intenção "alugar" ===
+    # Padrões de temporada/Airbnb → atualiza allows_short_term_rental, NÃO o intent
+    _SHORT_TERM_PATTERNS = [
+        "aluguel por temporada", "aluguel de temporada",
+        "locacao por temporada", "locação por temporada",
+        "airbnb", "short stay", "temporada",
+        "libera aluguel", "permite aluguel", "aceita aluguel temporada",
+        "aluguer temporada",
+    ]
+    _has_short_term = any(p in lowered_plain for p in _SHORT_TERM_PATTERNS)
+    if _has_short_term:
+        result["allows_short_term_rental"] = "yes"
+
+    # Intent explícita (comprar/alugar) — requer sinais fortes, excluindo contextos de temporada
     if "comprar" in lowered_plain or "compra" in lowered_plain or "investir" in lowered_plain:
         result["intent"] = "comprar"
-    elif "alugar" in lowered_plain or "aluguel" in lowered_plain:
+    elif not _has_short_term and ("alugar" in lowered_plain or "aluguel" in lowered_plain):
         result["intent"] = "alugar"
 
     city = detect_city(text)
@@ -454,23 +548,16 @@ def extract_criteria(message: str, known_neighborhoods: Iterable[str]) -> Dict[s
     if urgency:
         result["urgency"] = urgency
 
-    if "o mais rapido" in lowered or "o mais rápido" in lowered or "mais rapido possivel" in lowered or "o quanto antes" in lowered or "asap" in lowered:
-        result["timeline"] = "3m"
+    timeline = extract_timeline(text)
+    if timeline:
+        result["timeline"] = timeline
 
     # Leisure detection
     leisure_level = extract_leisure_level(text)
     if leisure_level:
         result["leisure_level"] = leisure_level
 
-    # Leisure required
-    if "area de lazer" in lowered or "lazer" in lowered:
-        if "nao" in lowered or "não" in lowered or "sem lazer" in lowered:
-            result["leisure_required"] = "no"
-        elif "preciso" in lowered or "importante" in lowered or "essencial" in lowered or "queria" in lowered or "sim" in lowered or "precisa" in lowered:
-            result["leisure_required"] = "yes"
-        elif is_indifferent:
-            result["leisure_required"] = "indifferent"
-
+    # Leisure detection (multi-slot: features + required ao mesmo tempo)
     leisure_keywords = {
         "piscina": "piscina",
         "academia": "academia",
@@ -485,11 +572,24 @@ def extract_criteria(message: str, known_neighborhoods: Iterable[str]) -> Dict[s
         "sauna": "sauna",
     }
     leisure_found = []
-    for key, canonical in leisure_keywords.items():
-        if key in lowered:
+    for kw, canonical in leisure_keywords.items():
+        if kw in lowered:
             leisure_found.append(canonical)
     if leisure_found:
         result["leisure_features"] = leisure_found
+        # Presença de features específicas implica leisure_required=yes
+        if "leisure_required" not in result:
+            result["leisure_required"] = "yes"
+
+    # Leisure required (palavras-chave explícitas)
+    if "area de lazer" in lowered or "lazer" in lowered:
+        if "nao" in lowered or "não" in lowered or "sem lazer" in lowered:
+            result["leisure_required"] = "no"
+        elif is_indifferent:
+            result["leisure_required"] = "indifferent"
+        else:
+            # Qualquer menção positiva de lazer (sem negação e sem indiferente) → yes
+            result["leisure_required"] = "yes"
 
     # Floor preference
     floor_pref = extract_floor_preference(text)

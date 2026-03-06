@@ -1,0 +1,13 @@
+{
+  "total_cases_min": 100,
+  "pass_rate_min": 0.72,
+  "check_accuracy_min": {
+    "route_ok": 0.99,
+    "slots_ok": 0.99,
+    "city_ok": 0.99,
+    "neighborhood_ok": 0.99,
+    "domain_ok": 0.95,
+    "topic_ok": 0.95,
+    "sources_ok": 0.70
+  }
+}

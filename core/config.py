@@ -1,16 +1,23 @@
 """
 Configuration module for production environment.
 All settings loaded via environment variables with secure defaults.
+
+Behavior por APP_ENV:
+  development: ausência de tokens WhatsApp é WARNING (não bloqueia startup)
+  production:  ausência de WHATSAPP_VERIFY_TOKEN é ERROR; sem WEBHOOK_API_KEY é WARNING
 """
+import logging
 import os
 from typing import Literal
+
+logger = logging.getLogger(__name__)
 
 
 class Settings:
     """Application settings loaded from environment variables."""
 
-    # Environment
-    APP_ENV: Literal["production", "development"] = os.getenv("APP_ENV", "production")
+    # Environment — padrão "development" para evitar falso-positivo em dev local
+    APP_ENV: Literal["production", "development"] = os.getenv("APP_ENV", "development")
 
     # Logging
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
@@ -32,31 +39,55 @@ class Settings:
     WEBHOOK_API_KEY: str | None = os.getenv("WEBHOOK_API_KEY")
 
     @classmethod
-    def validate_whatsapp_config(cls) -> dict[str, str]:
-        """Validate WhatsApp configuration and return warnings/errors."""
-        issues = {"errors": [], "warnings": []}
+    def is_development(cls) -> bool:
+        return cls.APP_ENV in {"development", "dev", "test"}
+
+    @classmethod
+    def validate_whatsapp_config(cls) -> dict[str, list]:
+        """
+        Valida configuração WhatsApp e retorna issues classificados.
+
+        Em development: ausência de tokens é WARNING (não impede startup).
+        Em production:  WHATSAPP_VERIFY_TOKEN ausente é ERROR.
+        """
+        issues: dict[str, list] = {"errors": [], "warnings": []}
+        dev_mode = cls.is_development()
 
         if not cls.WHATSAPP_VERIFY_TOKEN:
-            issues["errors"].append("WHATSAPP_VERIFY_TOKEN is required for webhook verification")
+            msg = "WHATSAPP_VERIFY_TOKEN não configurado — webhook de verificação do WhatsApp desativado"
+            if dev_mode:
+                issues["warnings"].append(msg + " (modo dev: OK)")
+            else:
+                issues["errors"].append(msg + " (obrigatório em produção)")
 
         if not cls.WHATSAPP_APP_SECRET:
             issues["warnings"].append(
-                "WHATSAPP_APP_SECRET not set - webhook signature validation disabled (not recommended for production)"
+                "WHATSAPP_APP_SECRET não configurado — validação de assinatura do webhook desativada"
+                + (" (não recomendado em produção)" if not dev_mode else "")
             )
 
         if cls.DISABLE_WHATSAPP_SEND:
-            issues["warnings"].append("DISABLE_WHATSAPP_SEND=true - message sending is disabled (test mode)")
+            issues["warnings"].append("DISABLE_WHATSAPP_SEND=true — envio de mensagens desativado (modo teste)")
 
         if not cls.WHATSAPP_ACCESS_TOKEN and not cls.DISABLE_WHATSAPP_SEND:
-            issues["warnings"].append("WHATSAPP_ACCESS_TOKEN not set - cannot send messages")
+            issues["warnings"].append("WHATSAPP_ACCESS_TOKEN não configurado — não é possível enviar mensagens")
 
         if not cls.WEBHOOK_API_KEY:
             issues["warnings"].append(
-                "WEBHOOK_API_KEY not set - /webhook endpoint is unprotected. "
-                "Set it with: python -c \"import secrets; print(secrets.token_hex(32))\""
+                "WEBHOOK_API_KEY não configurado — endpoint /webhook sem proteção. "
+                "Gere com: python -c \"import secrets; print(secrets.token_hex(32))\""
             )
 
         return issues
+
+    @classmethod
+    def log_startup_issues(cls) -> None:
+        """Loga issues de configuração no startup com nível adequado ao ambiente."""
+        issues = cls.validate_whatsapp_config()
+        for err in issues.get("errors", []):
+            logger.error("[CONFIG] %s", err)
+        for warn in issues.get("warnings", []):
+            logger.warning("[CONFIG] %s", warn)
 
 
 settings = Settings()

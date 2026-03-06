@@ -30,7 +30,11 @@ from .persistence import persist_state
 from . import persistence
 from .router import route_lead
 from .quality import compute_quality_score
-from app import faq
+from .knowledge_base import answer_question
+try:
+    from app import faq  # FastAPI deploy layout
+except ImportError:
+    import faq  # standalone / test layout
 
 
 AFFIRMATIVE = {"sim", "s", "pode", "claro", "ok", "yes", "isso", "perfeito"}
@@ -215,6 +219,15 @@ def _short_reply_updates(message: str, state: SessionState) -> Dict[str, Dict[st
             updates["lead_phone"] = {"value": message.strip(), "status": "confirmed", "source": "user", "raw_text": message}
             return updates
 
+    # NOVO: allows_short_term_rental
+    if lk == "allows_short_term_rental":
+        if is_yes or any(kw in msg for kw in {"permite", "aceita", "libera", "sim", "airbnb", "temporada"}):
+            updates["allows_short_term_rental"] = {"value": "yes", "status": "confirmed", "source": "user", "raw_text": message}
+            return updates
+        if is_no or any(kw in msg for kw in {"nao permite", "não permite", "nao aceita", "não aceita", "nao libera", "não libera"}):
+            updates["allows_short_term_rental"] = {"value": "no", "status": "confirmed", "source": "user", "raw_text": message}
+            return updates
+
     if lk in {"intent", "operation"}:
         if any(token in msg for token in {"comprar", "compra"}):
             updates["intent"] = {"value": "comprar", "status": "confirmed", "source": "user"}
@@ -251,6 +264,62 @@ def _short_reply_updates(message: str, state: SessionState) -> Dict[str, Dict[st
             return updates
 
     return updates
+
+
+_QA_INTERRUPT_STARTERS = {
+    "como", "quanto", "pode", "aceita", "tem", "vocês", "voces",
+    "qual", "quais", "quando", "onde", "por que", "porque",
+    "é possivel", "e possivel", "dá pra", "da pra", "posso",
+}
+
+
+def _is_qa_interrupt(message: str) -> bool:
+    """
+    Detecta se a mensagem é uma pergunta de QA (interrupção do funil).
+    Critérios: contém '?' OU começa com palavra interrogativa típica.
+    """
+    msg = message.strip().lower()
+    if "?" in msg:
+        return True
+    first_word = msg.split()[0] if msg.split() else ""
+    return first_word in _QA_INTERRUPT_STARTERS
+
+
+def _qa_answer_generic(message: str) -> Optional[str]:
+    """
+    Resposta genérica curta para perguntas QA não cobertas pelo FAQ.
+    Retorna None se não conseguir responder.
+    """
+    low = message.lower()
+    if "pet" in low or "animal" in low or "cachorro" in low or "gato" in low:
+        return "Imóveis pet-friendly existem! Vou anotar essa preferência pra filtrar as opções."
+    if "vaga" in low or "garagem" in low or "estacion" in low:
+        return "Garagem depende de cada imóvel — vou considerar isso nos filtros quando buscarmos."
+    if "condomin" in low or "taxa" in low:
+        return "O valor do condomínio varia por imóvel. Posso te mostrar opções com condomínio dentro de um teto, se quiser."
+    if "mobiliado" in low or "movel" in low or "móvel" in low:
+        return "Temos imóveis mobiliados e sem mobília. Vou anotar sua preferência."
+    if "financ" in low or "fgts" in low:
+        return "Financiamento e FGTS são possíveis dependendo do imóvel e do banco. Um corretor pode te orientar melhor."
+    if "piscina" in low or "academia" in low or "lazer" in low:
+        return "Área de lazer (piscina, academia, etc.) está disponível em vários condomínios — anotei isso nos seus critérios."
+    return None
+
+
+def _qa_answer_from_knowledge(message: str, state: SessionState, domain: Optional[str] = None) -> Optional[str]:
+    kb = answer_question(
+        message,
+        city=state.criteria.city,
+        neighborhood=state.criteria.neighborhood,
+        domain=domain,
+        top_k=3,
+    )
+    if not kb:
+        return None
+    sources = kb.get("sources", [])
+    if not sources:
+        return kb["answer"]
+    return kb["answer"] + "\n\nFontes internas: " + " | ".join(sources[:3])
 
 
 def _avoid_repeat_question(state: SessionState, proposed_key: Optional[str]) -> Optional[str]:
@@ -582,11 +651,19 @@ def handle_message(session_id: str, message: str, name: str | None = None, corre
     state.lead_score.temperature = score["temperature"]
     state.lead_score.score = score["score"]
     state.lead_score.reasons = score["reasons"]
-    logger.info("LEAD_SCORE score=%s temp=%s reasons=%s correlation=%s", score['score'], score['temperature'], score['reasons'], correlation_id)
+    _temp_icon = {"hot": "🔴 HOT", "warm": "🟡 WARM", "cold": "🔵 COLD"}.get(score['temperature'], score['temperature'].upper())
+    _bar_fill = min(10, score['score'] // 10)
+    _bar = "█" * _bar_fill + "░" * (10 - _bar_fill)
+    _reasons_str = ", ".join(score['reasons']) if score['reasons'] else "nenhum"
+    logger.info("▶ LEAD  %s [%s] %d/100 — %s  (correlation=%s)", _temp_icon, _bar, score['score'], _reasons_str, correlation_id)
 
     # Aplica quality scoring
     quality = compute_quality_score(state)
-    logger.info("QUALITY_SCORE score=%s grade=%s completeness=%s confidence=%s correlation=%s", quality['score'], quality['grade'], quality['completeness'], quality['confidence'], correlation_id)
+    _completeness_pct = int(quality['completeness'] * 100)
+    _comp_fill = min(10, _completeness_pct // 10)
+    _comp_bar = "█" * _comp_fill + "░" * (10 - _comp_fill)
+    _grade_icon = {"A": "⭐⭐⭐", "B": "⭐⭐", "C": "⭐", "D": "○○○"}.get(quality['grade'], "?")
+    logger.info("▶ QUAL  Nota %s %s [%s] %d%% completo | score=%d  (correlation=%s)", quality['grade'], _grade_icon, _comp_bar, _completeness_pct, quality['score'], correlation_id)
 
     # Handoff (regras IA + decisão)
     if handoff_info.get("should"):
@@ -617,7 +694,7 @@ def handle_message(session_id: str, message: str, name: str | None = None, corre
         # FAQ antes de seguir o funil
         faq_intent = faq.detect_faq_intent(message)
         if faq_intent:
-            faq_reply = faq.answer_faq(faq_intent, state)
+            faq_reply = faq.answer_faq(faq_intent, state, message)
             missing = missing_critical_fields(state)
             if missing:
                 next_key = next_best_question_key(state)
@@ -625,7 +702,7 @@ def handle_message(session_id: str, message: str, name: str | None = None, corre
                 if next_key == "neighborhood" and not state.criteria.city:
                     next_key = "city"
                 follow_up = _question_text_for_key(next_key, state)
-                combined = f"{faq_reply}\n\nSó pra eu te ajudar melhor: {follow_up}"
+                combined = f"{faq_reply}\n\nAgora, pra eu te indicar opções certas: {follow_up}"
                 state.last_question_key = next_key
                 state.pending_field = next_key
                 state.field_ask_count[next_key] = state.field_ask_count.get(next_key, 0) + 1
@@ -636,6 +713,31 @@ def handle_message(session_id: str, message: str, name: str | None = None, corre
                 return {"reply": combined, "state": state.to_public_dict()}
             state.history.append({"role": "assistant", "text": faq_reply})
             return {"reply": faq_reply, "state": state.to_public_dict()}
+
+        # QA interrupt genérico: pergunta no meio do funil não coberta pelo FAQ
+        if _is_qa_interrupt(message) and state.intent:
+            qa_answer = _qa_answer_generic(message)
+            if not qa_answer:
+                qa_answer = _qa_answer_from_knowledge(message, state)
+            if qa_answer:
+                missing = missing_critical_fields(state)
+                if missing:
+                    next_key = next_best_question_key(state)
+                    next_key = _avoid_repeat_question(state, next_key)
+                    if next_key == "neighborhood" and not state.criteria.city:
+                        next_key = "city"
+                    follow_up = _question_text_for_key(next_key, state)
+                    combined = f"{qa_answer}\n\nAgora, pra eu te indicar opções certas: {follow_up}"
+                    state.last_question_key = next_key
+                    state.pending_field = next_key
+                    state.field_ask_count[next_key] = state.field_ask_count.get(next_key, 0) + 1
+                    state.last_bot_utterance = combined
+                    if next_key and next_key not in state.asked_questions:
+                        state.asked_questions.append(next_key)
+                    state.history.append({"role": "assistant", "text": combined})
+                    return {"reply": combined, "state": state.to_public_dict()}
+                state.history.append({"role": "assistant", "text": qa_answer})
+                return {"reply": qa_answer, "state": state.to_public_dict()}
 
         missing = missing_critical_fields(state)
         if missing:
@@ -834,7 +936,7 @@ def handle_message(session_id: str, message: str, name: str | None = None, corre
 
     # FAQ para fluxo normal
     if faq_intent:
-        faq_reply = faq.answer_faq(faq_intent, state)
+        faq_reply = faq.answer_faq(faq_intent, state, message)
         missing = missing_critical_fields(state)
         if missing:
             next_key = next_best_question_key(state)

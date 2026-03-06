@@ -83,14 +83,8 @@ async def health():
 @app.on_event("startup")
 async def _startup():
     """Application startup - validate settings and log configuration."""
-    # Validate WhatsApp configuration
-    validation = settings.validate_whatsapp_config()
-    if validation["errors"]:
-        for error in validation["errors"]:
-            logger.error("Configuration error: %s", error)
-    if validation["warnings"]:
-        for warning in validation["warnings"]:
-            logger.warning("Configuration warning: %s", warning)
+    # Loga issues de configuração com nível correto (dev=WARNING, prod=ERROR)
+    settings.log_startup_issues()
 
     logger.info(
         "Application started - env=%s, log_level=%s, whatsapp_send=%s",
@@ -108,15 +102,13 @@ async def _startup():
 async def webhook(body: WebhookRequest, request: Request):
     correlation_id = os.urandom(8).hex()
     request.state.correlation_id = correlation_id
-    logger.info(
-        "webhook request - session=%s, msg_len=%d, correlation=%s",
-        body.session_id,
-        len(body.message),
-        correlation_id,
-    )
-    # Only expose the textual reply to the client; hide internal state/session details.
+    session_short = body.session_id[:8]
+
+    logger.info("👤 USER  [%s] %s  (correlation=%s)", session_short, body.message[:300], correlation_id)
+
     result = handle_message(body.session_id, body.message, name=body.name, correlation_id=correlation_id)
     if isinstance(result, dict) and "reply" in result:
+        logger.info("🤖 AGENT [%s] %s  (correlation=%s)", session_short, result["reply"][:300], correlation_id)
         return {"reply": result["reply"]}
     return result
 

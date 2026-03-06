@@ -1,0 +1,33 @@
+name: Eval Gate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run targeted tests
+        run: |
+          pytest -q tests/test_geo_normalizer.py tests/test_eval_runner.py tests/test_knowledge_layer1.py tests/test_knowledge_layer2.py
+
+      - name: Run eval baseline gate
+        run: |
+          python eval/run_eval.py --limit 100 --baseline eval/baseline.json --strict --output eval/report_ci.json

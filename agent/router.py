@@ -13,6 +13,7 @@ from datetime import datetime, date
 from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import dataclass, field
 from .state import SessionState
+from .geo_normalizer import location_key
 from .persistence import _ensure_dir  # reuse helper for directory creation
 
 
@@ -221,7 +222,7 @@ def _normalize_neighborhood(neighborhood: Optional[str]) -> Optional[str]:
         if not neighborhood:
             return None
         neighborhood = neighborhood[0]
-    return str(neighborhood).lower().strip()
+    return location_key(str(neighborhood))
 
 
 def _normalize_micro_location(micro: Optional[str]) -> Optional[str]:
