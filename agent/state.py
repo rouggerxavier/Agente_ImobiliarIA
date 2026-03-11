@@ -31,6 +31,7 @@ class LeadCriteria:
     leisure_required: Optional[str] = None  # yes|no|indifferent
     leisure_level: Optional[str] = None  # simple|ok|full|indifferent
     allows_short_term_rental: Optional[str] = None  # yes|no|unknown — restrição do imóvel/condomínio (ex: Airbnb)
+    extra_requirements: Optional[str] = None  # texto livre com requisitos extras do cliente
 
     @property
     def budget_max(self) -> Optional[int]:
@@ -318,6 +319,28 @@ class SessionState:
             if raw_text and key in {"city", "neighborhood"} and status not in {"confirmed", "override"}:
                 status = "confirmed"
 
+            if key == "extra_requirements":
+                # "none" = usuário disse que não tem requisitos extras; salvar como None mas marcar campo como visto
+                if raw_value == "none" or raw_value is None:
+                    self.triage_fields["extra_requirements"] = {
+                        "value": None,
+                        "status": "confirmed",
+                        "source": "user",
+                        "updated_at": self._now(),
+                        "turn_id": current_turn,
+                    }
+                elif raw_value:
+                    cleaned = str(raw_value).strip()
+                    if cleaned:
+                        self.criteria.extra_requirements = cleaned
+                        self.triage_fields["extra_requirements"] = {
+                            "value": cleaned,
+                            "status": "confirmed",
+                            "source": "user",
+                            "updated_at": self._now(),
+                            "turn_id": current_turn,
+                        }
+                continue
             if key in {"lead_name", "name"}:
                 if raw_value:
                     cleaned = str(raw_value).strip()

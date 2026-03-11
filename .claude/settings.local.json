@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python -c \":*)"
+      "Bash(python -c \":*)",
+      "Bash(python -c \"from agent.state import SessionState, LeadCriteria; lc = LeadCriteria\\(\\); print\\(''extra_requirements:'', lc.extra_requirements\\)\")",
+      "Bash(python -c \"from agent.rules import QUESTION_BANK; print\\(''extra_requirements variants:'', QUESTION_BANK.get\\(''extra_requirements''\\)\\)\")",
+      "Bash(python -c \"from agent.controller import handle_message; print\\(''controller imported OK''\\)\")",
+      "Bash(python -c \"from agent.controller import handle_message, _get_first_name, _personalize_question; print\\(''OK''\\)\")"
     ]
   }
 }

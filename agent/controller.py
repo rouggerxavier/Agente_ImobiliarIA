@@ -44,26 +44,22 @@ GREETINGS = {"bom dia", "boa tarde", "boa noite", "olá", "ola", "oi", "e aí", 
 INTENT_KEYWORDS = {"comprar", "alugar", "investir"}
 GENERIC_NAMES = {"ok", "ola", "olá", "oi", "hi", "hello", "tudo bem"}
 
-# Saudão inicial da Grankasa — exibida apenas no primeiro turno quando é só cumprimento
+# Saudão inicial da Grankasa — pede o nome primeiro para personalizar o atendimento
 _GRANKASA_GREETING = (
-    "Bom dia! 😊 Só pra me apresentar: sou a assistente virtual da Grankasa. "
-    "Estamos aqui pra te ajudar a encontrar o imóvel ideal! "
-    "Me conta, você está buscando algo pra comprar ou pra alugar?"
+    "Bom dia! 😊 Sou a assistente virtual da Grankasa, aqui pra te ajudar a encontrar o imóvel ideal. "
+    "Antes de começar, como posso te chamar?"
 )
 _GRANKASA_GREETING_TARDE = (
-    "Boa tarde! 😊 Só pra me apresentar: sou a assistente virtual da Grankasa. "
-    "Estamos aqui pra te ajudar a encontrar o imóvel ideal! "
-    "Me conta, você está buscando algo pra comprar ou pra alugar?"
+    "Boa tarde! 😊 Sou a assistente virtual da Grankasa, aqui pra te ajudar a encontrar o imóvel ideal. "
+    "Antes de começar, como posso te chamar?"
 )
 _GRANKASA_GREETING_NOITE = (
-    "Boa noite! 😊 Só pra me apresentar: sou a assistente virtual da Grankasa. "
-    "Estamos aqui pra te ajudar a encontrar o imóvel ideal! "
-    "Me conta, você está buscando algo pra comprar ou pra alugar?"
+    "Boa noite! 😊 Sou a assistente virtual da Grankasa, aqui pra te ajudar a encontrar o imóvel ideal. "
+    "Antes de começar, como posso te chamar?"
 )
 _GRANKASA_GREETING_NEUTRAL = (
-    "Olá! 😊 Só pra me apresentar: sou a assistente virtual da Grankasa. "
-    "Estamos aqui pra te ajudar a encontrar o imóvel ideal! "
-    "Me conta, você está buscando algo pra comprar ou pra alugar?"
+    "Olá! 😊 Sou a assistente virtual da Grankasa, aqui pra te ajudar a encontrar o imóvel ideal. "
+    "Antes de começar, como posso te chamar?"
 )
 
 
@@ -209,6 +205,12 @@ def _short_reply_updates(message: str, state: SessionState) -> Dict[str, Dict[st
             for prefix in ["meu nome e", "meu nome é", "me chamo", "sou ", "nome ", "eu sou", "aqui é", "aqui e"]:
                 if cleaned.startswith(prefix):
                     cleaned = cleaned[len(prefix):].strip()
+            # Rejeita se parece intenção imobiliária ou frase longa demais (não é nome)
+            _not_names = {"comprar", "alugar", "quero", "queria", "procuro", "procurando", "busco",
+                          "apartamento", "casa", "cobertura", "sim", "nao", "não", "ok", "tudo bem"}
+            first_word = cleaned.strip().split()[0].lower() if cleaned.strip() else ""
+            if first_word in _not_names or len(cleaned.split()) > 4:
+                return updates
             updates["lead_name"] = {"value": cleaned.strip().title(), "status": "confirmed", "source": "user", "raw_text": message}
             return updates
 
@@ -255,6 +257,16 @@ def _short_reply_updates(message: str, state: SessionState) -> Dict[str, Dict[st
         if is_no or any(kw in msg for kw in {"nao permite", "não permite", "nao aceita", "não aceita", "nao libera", "não libera"}):
             updates["allows_short_term_rental"] = {"value": "no", "status": "confirmed", "source": "user", "raw_text": message}
             return updates
+
+    # Requisitos extras: qualquer texto livre é aceito; "não" / "nada" / "tá bom" encerra sem salvar
+    if lk == "extra_requirements":
+        _skip_phrases = {"nao", "não", "nada", "ta bom", "tá bom", "tudo certo", "nao tenho", "não tenho", "sem mais", "nao tem mais", "não tem mais", "nao faltou", "não faltou"}
+        if msg in _skip_phrases or msg.startswith("nao ") or msg.startswith("não "):
+            # Usuário não tem requisitos extras — marca campo como "none" (sem info) para não perguntar de novo
+            updates["extra_requirements"] = {"value": "none", "status": "confirmed", "source": "user", "raw_text": message}
+        elif len(message.strip()) >= 3:
+            updates["extra_requirements"] = {"value": message.strip(), "status": "confirmed", "source": "user", "raw_text": message}
+        return updates
 
     if lk in {"intent", "operation"}:
         if any(token in msg for token in {"comprar", "compra"}):
@@ -414,8 +426,27 @@ def _question_text_for_key(key: Optional[str], state: SessionState) -> str:
         return "Como posso ajudar?"
     question = choose_question(key, state)
     if question:
+        return _personalize_question(question, state)
+    base = QUESTION_BANK.get(key, ["Pode me dar mais detalhes?"])[0]
+    return _personalize_question(base, state)
+
+
+def _personalize_question(question: str, state: SessionState) -> str:
+    """Insere o nome da pessoa na pergunta quando disponível, de forma natural."""
+    first_name = _get_first_name(state)
+    if not first_name:
         return question
-    return QUESTION_BANK.get(key, ["Pode me dar mais detalhes?"])[0]
+    # Evita adicionar o nome se já está na pergunta
+    if first_name.lower() in question.lower():
+        return question
+    # Adiciona o nome de forma natural usando template estável por pergunta
+    templates = [
+        f"{first_name}, {question[0].lower()}{question[1:]}",
+        f"E {first_name}, {question[0].lower()}{question[1:]}",
+        f"{question.rstrip('?')}, {first_name}?",
+    ]
+    idx = hash(question) % len(templates)
+    return templates[idx]
 
 
 def _prepend_greeting_if_needed(message: str, reply: str, state: SessionState = None) -> str:
@@ -461,6 +492,13 @@ def _is_valid_name(name: Optional[str]) -> bool:
     if cleaned in GENERIC_NAMES or len(cleaned) < 3:
         return False
     return True
+
+
+def _get_first_name(state: SessionState) -> Optional[str]:
+    name = state.lead_profile.get("name")
+    if not _is_valid_name(name):
+        return None
+    return str(name).strip().split()[0].capitalize()
 
 
 def _format_budget(value: int) -> str:
@@ -711,12 +749,12 @@ def handle_message(session_id: str, message: str, name: str | None = None, corre
                 greeting_reply = _GRANKASA_GREETING
             else:
                 greeting_reply = _GRANKASA_GREETING_NEUTRAL
-            state.last_question_key = "intent"
-            state.pending_field = "intent"
-            state.field_ask_count["intent"] = state.field_ask_count.get("intent", 0) + 1
+            state.last_question_key = "lead_name"
+            state.pending_field = "lead_name"
+            state.field_ask_count["lead_name"] = state.field_ask_count.get("lead_name", 0) + 1
             state.last_bot_utterance = greeting_reply
-            if "intent" not in state.asked_questions:
-                state.asked_questions.append("intent")
+            if "lead_name" not in state.asked_questions:
+                state.asked_questions.append("lead_name")
             state.history.append({"role": "assistant", "text": greeting_reply})
             return {"reply": greeting_reply, "state": state.to_public_dict()}
 
@@ -812,6 +850,18 @@ def handle_message(session_id: str, message: str, name: str | None = None, corre
                     return {"reply": combined, "state": state.to_public_dict()}
                 state.history.append({"role": "assistant", "text": qa_answer})
                 return {"reply": qa_answer, "state": state.to_public_dict()}
+
+        # 0. Pede nome primeiro — antes de qualquer campo do funil
+        if not _is_valid_name(state.lead_profile.get("name")) and "lead_name" not in state.asked_questions:
+            name_q = choose_question("lead_name", state) or "Antes de começar, como posso te chamar?"
+            state.last_question_key = "lead_name"
+            state.pending_field = "lead_name"
+            state.field_ask_count["lead_name"] = state.field_ask_count.get("lead_name", 0) + 1
+            state.last_bot_utterance = name_q
+            state.asked_questions.append("lead_name")
+            reply = _prepend_greeting_if_needed(message, name_q, state)
+            state.history.append({"role": "assistant", "text": reply})
+            return {"reply": reply, "state": state.to_public_dict()}
 
         missing = missing_critical_fields(state)
         if missing:
@@ -923,22 +973,27 @@ def handle_message(session_id: str, message: str, name: str | None = None, corre
                 logger.info("QUALITY_GATE sem perguntas disponíveis, permitindo handoff com grade=%s", quality.get('grade'))
 
         # Triagem concluída (sem campos missing ou quality gate passou)
-        # Roteamento automático de lead para corretor
-        # 1. Pede nome se não tem
-        if not _is_valid_name(state.lead_profile.get("name")):
-            name_q = "Quase lá 😊 Antes de eu fechar seu perfil, pode me dizer seu nome?"
-            state.last_question_key = "lead_name"
-            state.pending_field = "lead_name"
-            state.field_ask_count["lead_name"] = state.field_ask_count.get("lead_name", 0) + 1
-            state.last_bot_utterance = name_q
-            if "lead_name" not in state.asked_questions:
-                state.asked_questions.append("lead_name")
-            state.history.append({"role": "assistant", "text": name_q})
-            return {"reply": name_q, "state": state.to_public_dict()}
+        # 1. Pergunta aberta sobre requisitos extras (uma única vez)
+        if "extra_requirements" not in state.asked_questions:
+            first_name = _get_first_name(state)
+            raw_extra_q = choose_question("extra_requirements", state) or "Ficou faltando alguma coisa? Algum detalhe ou exigência importante que eu ainda não perguntei? (ou diga 'não' se estiver tudo certo)"
+            extra_q = f"{first_name}, {raw_extra_q[0].lower()}{raw_extra_q[1:]}" if first_name else raw_extra_q
+            state.last_question_key = "extra_requirements"
+            state.pending_field = "extra_requirements"
+            state.field_ask_count["extra_requirements"] = state.field_ask_count.get("extra_requirements", 0) + 1
+            state.last_bot_utterance = extra_q
+            state.asked_questions.append("extra_requirements")
+            state.history.append({"role": "assistant", "text": extra_q})
+            persist_state(state)
+            return {"reply": extra_q, "state": state.to_public_dict()}
 
-        # 2. Pede telefone se não tem
+        # 2. Pede telefone para fechar — é o encerramento da conversa
         if not state.lead_profile.get("phone"):
-            phone_q = "E pra o corretor conseguir te contatar, qual o seu celular ou WhatsApp?"
+            first_name = _get_first_name(state)
+            if first_name:
+                phone_q = f"Perfeito, {first_name}! Pra eu passar seu perfil pro corretor, me manda seu número de WhatsApp?"
+            else:
+                phone_q = "Perfeito! Pra eu passar seu perfil pro corretor, me manda seu número de WhatsApp?"
             state.last_question_key = "lead_phone"
             state.pending_field = "lead_phone"
             state.field_ask_count["lead_phone"] = state.field_ask_count.get("lead_phone", 0) + 1

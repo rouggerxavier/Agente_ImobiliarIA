@@ -67,8 +67,6 @@ CRITICAL_ORDER = [
     "timeline",
     "micro_location",   # NOVO: obrigatório (aceita "indifferent")
     "leisure_required", # NOVO: obrigatório (aceita "indifferent")
-    "lead_name",
-    "lead_phone",
 ]
 
 PREFERENCE_ORDER = [
@@ -267,6 +265,11 @@ QUESTION_BANK: Dict[str, List[str]] = {
     ],
     "payment_type": [
         "E a forma de pagamento, está pensando em financiar, usar FGTS ou pagar à vista?",
+    ],
+    "extra_requirements": [
+        "Teve alguma coisa que você precisa no imóvel que a gente não falou ainda? Pode contar à vontade (ou diga 'não' se tiver tudo).",
+        "Antes de fechar seu perfil, tem algum detalhe ou exigência específica que a gente não tocou? (ex: andar alto, vista, pet, varanda...)",
+        "Ficou faltando alguma coisa? Alguma necessidade que você considera importante e que eu ainda não perguntei?",
     ],
     "lead_name": [
         "Antes de eu fechar o seu perfil aqui, qual é o seu nome?",

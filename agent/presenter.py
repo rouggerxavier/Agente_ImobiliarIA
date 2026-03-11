@@ -290,6 +290,11 @@ def build_summary_payload(state: SessionState, assigned_agent: Dict[str, Any] = 
     if extras:
         lines.append(f"✨  Preferências: {', '.join(extras)}")
 
+    # Requisitos extras informados pelo cliente
+    extra_req = state.criteria.extra_requirements or state.triage_fields.get("extra_requirements", {}).get("value")
+    if extra_req and str(extra_req).lower() not in {"none", "nenhum", "nada"}:
+        lines.append(f"📝  Observações: {extra_req}")
+
     lines.append("")
 
     # Contato do corretor (número fictício estável) — NUNCA expor número real do banco
