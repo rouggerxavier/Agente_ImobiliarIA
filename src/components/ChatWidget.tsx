@@ -42,13 +42,22 @@ const ChatWidget = () => {
         headers,
         body: JSON.stringify({ session_id: sessionId, message: text }),
       });
-      const data = await res.json();
+
+      const contentType = res.headers.get("content-type") || "";
+      const data = contentType.includes("application/json") ? await res.json() : null;
+
+      if (!res.ok) {
+        const detail = data?.detail || data?.message || `Erro HTTP ${res.status}`;
+        throw new Error(detail);
+      }
+
       const reply = data.reply || data.response || data.message || "Sem resposta.";
       setMessages((prev) => [...prev, { role: "agent", text: reply }]);
-    } catch {
+    } catch (error) {
+      const detail = error instanceof Error ? ` (${error.message})` : "";
       setMessages((prev) => [
         ...prev,
-        { role: "agent", text: "Desculpe, não consegui me conectar ao servidor. Tente novamente." },
+        { role: "agent", text: `Desculpe, não consegui me conectar ao servidor. Tente novamente${detail}.` },
       ]);
     } finally {
       setLoading(false);

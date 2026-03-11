@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 
 class Settings:
     """Application settings loaded from environment variables."""
-
     # Environment — padrão "development" para evitar falso-positivo em dev local
     APP_ENV: Literal["production", "development"] = os.getenv("APP_ENV", "development")
 

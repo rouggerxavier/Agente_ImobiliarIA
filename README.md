@@ -20,6 +20,16 @@ npm install
 npm run dev
 ```
 
+### Docker (app completa)
+```bash
+copy .env.example .env
+docker compose up --build -d
+```
+
+App disponivel em:
+- `http://localhost:8000`
+- Se `WEBHOOK_API_KEY` estiver preenchida no backend, preencha tambem `VITE_BACKEND_API_KEY` no `.env` antes do build do Docker.
+
 ### Testes
 ```bash
 python -m pytest -q
