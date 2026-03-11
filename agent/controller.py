@@ -44,22 +44,32 @@ GREETINGS = {"bom dia", "boa tarde", "boa noite", "olá", "ola", "oi", "e aí", 
 INTENT_KEYWORDS = {"comprar", "alugar", "investir"}
 GENERIC_NAMES = {"ok", "ola", "olá", "oi", "hi", "hello", "tudo bem"}
 
+# Aviso inicial obrigatório para contexto de triagem
+_TRIAGE_PRE_NOTICE = (
+    "Antes de seguir, te explico rapidinho: este atendimento funciona apenas para triagem. "
+    "Vou anotar como você quer seu apartamento ou casa e, ao final, repasso tudo para um corretor, "
+    "junto com seu nome e número de WhatsApp, para ele entrar em contato. "
+)
 # Saudão inicial da Grankasa — pede o nome primeiro para personalizar o atendimento
 _GRANKASA_GREETING = (
     "Bom dia! 😊 Sou a assistente virtual da Grankasa, aqui pra te ajudar a encontrar o imóvel ideal. "
-    "Antes de começar, como posso te chamar?"
+    f"{_TRIAGE_PRE_NOTICE}"
+    "Pra começar, como posso te chamar?"
 )
 _GRANKASA_GREETING_TARDE = (
     "Boa tarde! 😊 Sou a assistente virtual da Grankasa, aqui pra te ajudar a encontrar o imóvel ideal. "
-    "Antes de começar, como posso te chamar?"
+    f"{_TRIAGE_PRE_NOTICE}"
+    "Pra começar, como posso te chamar?"
 )
 _GRANKASA_GREETING_NOITE = (
     "Boa noite! 😊 Sou a assistente virtual da Grankasa, aqui pra te ajudar a encontrar o imóvel ideal. "
-    "Antes de começar, como posso te chamar?"
+    f"{_TRIAGE_PRE_NOTICE}"
+    "Pra começar, como posso te chamar?"
 )
 _GRANKASA_GREETING_NEUTRAL = (
     "Olá! 😊 Sou a assistente virtual da Grankasa, aqui pra te ajudar a encontrar o imóvel ideal. "
-    "Antes de começar, como posso te chamar?"
+    f"{_TRIAGE_PRE_NOTICE}"
+    "Pra começar, como posso te chamar?"
 )
 
 
@@ -853,7 +863,8 @@ def handle_message(session_id: str, message: str, name: str | None = None, corre
 
         # 0. Pede nome primeiro — antes de qualquer campo do funil
         if not _is_valid_name(state.lead_profile.get("name")) and "lead_name" not in state.asked_questions:
-            name_q = choose_question("lead_name", state) or "Antes de começar, como posso te chamar?"
+            name_q_base = choose_question("lead_name", state) or "Antes de começar, como posso te chamar?"
+            name_q = f"{_TRIAGE_PRE_NOTICE}{name_q_base}"
             state.last_question_key = "lead_name"
             state.pending_field = "lead_name"
             state.field_ask_count["lead_name"] = state.field_ask_count.get("lead_name", 0) + 1
