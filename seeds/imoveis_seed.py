@@ -9,10 +9,6 @@ from sqlalchemy.orm import Session
 from models.imovel import Imovel
 
 
-def _photo(code: str) -> str:
-    return f"https://loremflickr.com/1200/800/apartment,interior?lock={code}"
-
-
 SEED_IMOVEIS = [
     {
         "codigo": "7989",
@@ -22,7 +18,7 @@ SEED_IMOVEIS = [
             "Apartamento residencial em Copacabana com planta bem distribuida, "
             "boa iluminacao e acesso rapido ao comercio da regiao."
         ),
-        "foto_url": _photo("7989"),
+        "foto_url": "/imoveis-img/locacao-01.jpg",
         "valor_aluguel": Decimal("4000.00"),
         "valor_compra": None,
         "condominio": Decimal("1043.00"),
@@ -48,7 +44,7 @@ SEED_IMOVEIS = [
             "Imovel residencial no Leblon, ideal para familias que buscam localizacao "
             "nobre, conforto interno e mobilidade na Zona Sul."
         ),
-        "foto_url": _photo("8012"),
+        "foto_url": "/imoveis-img/locacao-02.jpg",
         "valor_aluguel": Decimal("7900.00"),
         "valor_compra": None,
         "condominio": Decimal("1570.00"),
@@ -74,7 +70,7 @@ SEED_IMOVEIS = [
             "Apartamento amplo em Copacabana, proximo a servicos e com planta funcional "
             "para rotina de moradia e home office."
         ),
-        "foto_url": _photo("8345"),
+        "foto_url": "/imoveis-img/locacao-03.jpg",
         "valor_aluguel": Decimal("6500.00"),
         "valor_compra": None,
         "condominio": Decimal("1800.00"),
@@ -100,7 +96,7 @@ SEED_IMOVEIS = [
             "Apartamento com varanda em Ipanema, ambientes integrados e boa circulacao "
             "de ar, ideal para quem deseja morar proximo a praia."
         ),
-        "foto_url": _photo("8124"),
+        "foto_url": "/imoveis-img/locacao-04.jpg",
         "valor_aluguel": Decimal("9800.00"),
         "valor_compra": None,
         "condominio": Decimal("2100.00"),
@@ -126,7 +122,7 @@ SEED_IMOVEIS = [
             "Imovel em Botafogo com planta inteligente, excelente para casal ou familia "
             "pequena, perto de metro e comercio."
         ),
-        "foto_url": _photo("8450"),
+        "foto_url": "/imoveis-img/locacao-05.jpg",
         "valor_aluguel": Decimal("5200.00"),
         "valor_compra": None,
         "condominio": Decimal("1200.00"),
@@ -152,7 +148,7 @@ SEED_IMOVEIS = [
             "Apartamento para venda em Copacabana com boa relacao custo-beneficio, "
             "layout versatil e proximidade da praia."
         ),
-        "foto_url": _photo("8906"),
+        "foto_url": "/imoveis-img/venda-01.jpg",
         "valor_aluguel": None,
         "valor_compra": Decimal("630000.00"),
         "condominio": Decimal("1150.00"),
@@ -178,7 +174,7 @@ SEED_IMOVEIS = [
             "Studio reformado em Copacabana para investimento ou moradia, com "
             "condominio tradicional e acesso facil ao transporte."
         ),
-        "foto_url": _photo("7197"),
+        "foto_url": "/imoveis-img/venda-02.jpg",
         "valor_aluguel": None,
         "valor_compra": Decimal("450000.00"),
         "condominio": Decimal("900.00"),
@@ -204,7 +200,7 @@ SEED_IMOVEIS = [
             "Apartamento moderno na Barra da Tijuca com varanda gourmet e "
             "infraestrutura completa no condominio."
         ),
-        "foto_url": _photo("9021"),
+        "foto_url": "/imoveis-img/venda-03.jpg",
         "valor_aluguel": None,
         "valor_compra": Decimal("1250000.00"),
         "condominio": Decimal("2100.00"),
@@ -230,7 +226,7 @@ SEED_IMOVEIS = [
             "Cobertura duplex em Ipanema com area externa e vista livre, "
             "projeto ideal para quem busca espaco e exclusividade."
         ),
-        "foto_url": _photo("9108"),
+        "foto_url": "/imoveis-img/venda-04.jpg",
         "valor_aluguel": None,
         "valor_compra": Decimal("2500000.00"),
         "condominio": Decimal("3400.00"),
@@ -256,7 +252,7 @@ SEED_IMOVEIS = [
             "Apartamento residencial em Botafogo com metragem equilibrada, "
             "boa ventilacao e facil acesso a servicos."
         ),
-        "foto_url": _photo("9254"),
+        "foto_url": "/imoveis-img/venda-05.jpg",
         "valor_aluguel": None,
         "valor_compra": Decimal("870000.00"),
         "condominio": Decimal("1300.00"),

@@ -90,6 +90,7 @@ const ImoveisListPage = ({ tipo, titulo, descricao }: ImoveisListPageProps) => {
                       alt={imovel.titulo}
                       className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
                       loading="lazy"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/imoveis-img/fallback.jpg"; }}
                     />
                     <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/60 to-transparent" />
                   </div>

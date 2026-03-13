@@ -51,6 +51,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Serve property images before API routers to avoid /imoveis/{id} capturing image requests
+_img_path = os.path.join(os.path.dirname(__file__), "public", "imoveis")
+if os.path.isdir(_img_path):
+    app.mount("/imoveis-img", StaticFiles(directory=_img_path), name="imoveis-img")
+
 # Include routers
 app.include_router(whatsapp_router)
 app.include_router(imoveis_router)

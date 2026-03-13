@@ -92,6 +92,7 @@ const ImovelDetalhe = () => {
                       alt={data.titulo}
                       className="w-full h-[280px] object-cover"
                       loading="lazy"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/imoveis-img/fallback.jpg"; }}
                     />
                   </div>
 
