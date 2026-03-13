@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Building2, MapPin } from "lucide-react";
 
@@ -19,6 +19,7 @@ const yesNo = (value: boolean) => (value ? "Sim" : "Nao");
 
 const ImovelDetalhe = () => {
   const { codigo = "" } = useParams();
+  const navigate = useNavigate();
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["imovel", codigo],
@@ -56,11 +57,19 @@ const ImovelDetalhe = () => {
 
       <main className="flex-1">
         <section className="mx-auto max-w-6xl px-4 py-12 md:py-14">
-          <Button asChild variant="ghost" className="mb-6 text-slate-700">
-            <Link to="/">
-              <ArrowLeft className="h-4 w-4" />
-              Voltar
-            </Link>
+          <Button
+            variant="ghost"
+            className="mb-6 text-slate-700"
+            onClick={() => {
+              if (window.history.length > 1) {
+                navigate(-1);
+              } else {
+                navigate(data ? `/${data.tipo_negocio}` : "/");
+              }
+            }}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar
           </Button>
 
           {isLoading && <div className="h-56 rounded-2xl bg-white/70 animate-pulse" />}
