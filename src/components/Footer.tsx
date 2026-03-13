@@ -32,7 +32,7 @@ const Footer = () => {
             <h4 className="font-display text-lg font-semibold mb-4">Links</h4>
             <div className="space-y-2 font-body text-sm text-primary-foreground/70">
               <a href="/#inicio" className="block hover:text-accent transition-colors">Inicio</a>
-              <Link to="/a-empresa" className="block hover:text-accent transition-colors">A Empresa</Link>
+              <Link to="/sobre" className="block hover:text-accent transition-colors">Sobre</Link>
               <Link to="/locacao" className="block hover:text-accent transition-colors">Locacao</Link>
               <Link to="/venda" className="block hover:text-accent transition-colors">Venda</Link>
               <Link to="/fale-conosco" className="block hover:text-accent transition-colors">Fale Conosco</Link>

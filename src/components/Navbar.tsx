@@ -25,11 +25,8 @@ const Navbar = () => {
           <Link to="/venda" className="text-muted-foreground hover:text-foreground transition-colors">
             Venda
           </Link>
-          <a href="/#sobre" className="text-muted-foreground hover:text-foreground transition-colors">
+          <Link to="/sobre" className="text-muted-foreground hover:text-foreground transition-colors">
             Sobre
-          </a>
-          <Link to="/a-empresa" className="text-muted-foreground hover:text-foreground transition-colors">
-            A Empresa
           </Link>
           <Link to="/fale-conosco" className="text-muted-foreground hover:text-foreground transition-colors">
             Fale Conosco
@@ -52,11 +49,8 @@ const Navbar = () => {
           <Link to="/venda" className="block text-muted-foreground hover:text-foreground" onClick={() => setOpen(false)}>
             Venda
           </Link>
-          <a href="/#sobre" className="block text-muted-foreground hover:text-foreground" onClick={() => setOpen(false)}>
+          <Link to="/sobre" className="block text-muted-foreground hover:text-foreground" onClick={() => setOpen(false)}>
             Sobre
-          </a>
-          <Link to="/a-empresa" className="block text-muted-foreground hover:text-foreground" onClick={() => setOpen(false)}>
-            A Empresa
           </Link>
           <Link to="/fale-conosco" className="block text-muted-foreground hover:text-foreground" onClick={() => setOpen(false)}>
             Fale Conosco

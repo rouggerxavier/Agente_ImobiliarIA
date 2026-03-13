@@ -119,6 +119,26 @@ def listar_venda(
     return _query_by_tipo(db=db, tipo="venda", limit=limit, offset=offset)
 
 
+@router.get("/busca", response_model=list[ImovelResponse])
+def buscar_imoveis(
+    q: str = Query(..., min_length=1, max_length=200),
+    limit: int = Query(default=20, ge=1, le=100),
+    db: Session = Depends(get_db),
+) -> list[Imovel]:
+    term = f"%{q.strip()}%"
+    return (
+        db.query(Imovel)
+        .filter(
+            Imovel.titulo.ilike(term)
+            | Imovel.bairro.ilike(term)
+            | Imovel.cidade.ilike(term)
+        )
+        .order_by(Imovel.id.desc())
+        .limit(limit)
+        .all()
+    )
+
+
 @router.get("/codigo/{codigo}", response_model=ImovelResponse)
 def obter_imovel_por_codigo(codigo: str, db: Session = Depends(get_db)) -> Imovel:
     imovel = db.query(Imovel).filter(Imovel.codigo == codigo).first()

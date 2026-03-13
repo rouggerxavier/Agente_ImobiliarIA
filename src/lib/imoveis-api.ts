@@ -43,3 +43,7 @@ export function fetchImoveisPorTipo(tipo: TipoNegocio): Promise<Imovel[]> {
 export function fetchImovelPorCodigo(codigo: string): Promise<Imovel> {
   return apiGet<Imovel>(`/imoveis/codigo/${encodeURIComponent(codigo)}`);
 }
+
+export function fetchBusca(q: string): Promise<Imovel[]> {
+  return apiGet<Imovel[]>(`/imoveis/busca?q=${encodeURIComponent(q)}`);
+}

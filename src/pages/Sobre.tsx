@@ -15,7 +15,7 @@ const contacts = [
   { label: "WhatsApp Venda", number: "(21) 99398-2345", href: "https://wa.me/5521993982345", icon: MessageCircle },
 ];
 
-const AEmpresa = () => {
+const Sobre = () => {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "hsl(38 35% 92%)" }}>
       <Navbar />
@@ -31,7 +31,7 @@ const AEmpresa = () => {
               "radial-gradient(circle at 15% 25%, hsl(220 80% 58% / 0.35) 0, transparent 42%), radial-gradient(circle at 86% 32%, hsl(240 80% 72% / 0.2) 0, transparent 40%)",
           }}
         />
-        <div className="relative mx-auto max-w-6xl px-4 py-11">
+        <div className="relative mx-auto max-w-6xl px-4 py-11 text-center">
           <p className="text-[11px] uppercase tracking-[0.28em] text-white/75 font-semibold">CJ 5234</p>
           <h1
             className="mt-2 text-3xl md:text-4xl text-white"
@@ -148,4 +148,4 @@ const AEmpresa = () => {
   );
 };
 
-export default AEmpresa;
+export default Sobre;
