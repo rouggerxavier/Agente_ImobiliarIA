@@ -19,17 +19,20 @@ const Navbar = () => {
           <a href="/#inicio" className="text-muted-foreground hover:text-foreground transition-colors">
             Inicio
           </a>
-          <a href="/#imoveis" className="text-muted-foreground hover:text-foreground transition-colors">
-            Imoveis
-          </a>
+          <Link to="/locacao" className="text-muted-foreground hover:text-foreground transition-colors">
+            Locacao
+          </Link>
+          <Link to="/venda" className="text-muted-foreground hover:text-foreground transition-colors">
+            Venda
+          </Link>
           <a href="/#sobre" className="text-muted-foreground hover:text-foreground transition-colors">
             Sobre
           </a>
-          <a href="/#contato" className="text-muted-foreground hover:text-foreground transition-colors">
-            Contato
-          </a>
           <Link to="/a-empresa" className="text-muted-foreground hover:text-foreground transition-colors">
             A Empresa
+          </Link>
+          <Link to="/fale-conosco" className="text-muted-foreground hover:text-foreground transition-colors">
+            Fale Conosco
           </Link>
         </div>
 
@@ -43,17 +46,20 @@ const Navbar = () => {
           <a href="/#inicio" className="block text-muted-foreground hover:text-foreground" onClick={() => setOpen(false)}>
             Inicio
           </a>
-          <a href="/#imoveis" className="block text-muted-foreground hover:text-foreground" onClick={() => setOpen(false)}>
-            Imoveis
-          </a>
+          <Link to="/locacao" className="block text-muted-foreground hover:text-foreground" onClick={() => setOpen(false)}>
+            Locacao
+          </Link>
+          <Link to="/venda" className="block text-muted-foreground hover:text-foreground" onClick={() => setOpen(false)}>
+            Venda
+          </Link>
           <a href="/#sobre" className="block text-muted-foreground hover:text-foreground" onClick={() => setOpen(false)}>
             Sobre
           </a>
-          <a href="/#contato" className="block text-muted-foreground hover:text-foreground" onClick={() => setOpen(false)}>
-            Contato
-          </a>
           <Link to="/a-empresa" className="block text-muted-foreground hover:text-foreground" onClick={() => setOpen(false)}>
             A Empresa
+          </Link>
+          <Link to="/fale-conosco" className="block text-muted-foreground hover:text-foreground" onClick={() => setOpen(false)}>
+            Fale Conosco
           </Link>
         </div>
       )}

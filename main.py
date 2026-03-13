@@ -15,6 +15,8 @@ from agent.llm import LLM_PREWARM, prewarm_llm
 from core.logging import setup_logging
 from core.config import settings
 from routes.whatsapp import router as whatsapp_router
+from routes.imoveis import router as imoveis_router
+from db import init_db
 
 load_dotenv(override=True)
 
@@ -51,6 +53,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(whatsapp_router)
+app.include_router(imoveis_router)
 
 
 class WebhookRequest(BaseModel):
@@ -83,6 +86,7 @@ async def health():
 @app.on_event("startup")
 async def _startup():
     """Application startup - validate settings and log configuration."""
+    init_db()
     # Loga issues de configuração com nível correto (dev=WARNING, prod=ERROR)
     settings.log_startup_issues()
 

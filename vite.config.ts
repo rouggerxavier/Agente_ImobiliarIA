@@ -17,6 +17,10 @@ export default defineConfig(({ mode }) => ({
         target: "http://localhost:8000",
         changeOrigin: true,
       },
+      "/imoveis": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+      },
     },
     hmr: {
       overlay: false,
