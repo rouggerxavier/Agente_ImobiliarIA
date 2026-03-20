@@ -26,6 +26,7 @@ const slides = [
 ];
 
 const INTERVAL_MS = 10000;
+const HERO_SEARCH_INPUT_ID = "hero-property-search";
 
 const Hero = () => {
   const [current, setCurrent] = useState(0);
@@ -55,9 +56,10 @@ const Hero = () => {
     if (e.key === "Enter") handleSearch();
   };
 
+  const hasQuery = query.trim().length > 0;
+
   return (
     <section id="inicio" className="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
-      {/* Slides */}
       {slides.map((slide, i) => (
         <img
           key={slide.url}
@@ -69,42 +71,46 @@ const Hero = () => {
         />
       ))}
 
-      {/* Overlay escuro */}
       <div className="absolute inset-0" style={{ background: "var(--gradient-hero)" }} />
 
-      {/* Botão anterior */}
       <button
+        type="button"
         onClick={prev}
         aria-label="Foto anterior"
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-11 h-11 rounded-full bg-black/40 text-white hover:bg-black/65 transition-colors backdrop-blur-sm border border-white/20"
+        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-11 h-11 rounded-full bg-black/40 text-white hover:bg-black/65 transition-colors backdrop-blur-sm border border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black/40"
       >
         <ChevronLeft className="h-6 w-6" />
       </button>
 
-      {/* Botão próximo */}
       <button
+        type="button"
         onClick={next}
         aria-label="Próxima foto"
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-11 h-11 rounded-full bg-black/40 text-white hover:bg-black/65 transition-colors backdrop-blur-sm border border-white/20"
+        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-11 h-11 rounded-full bg-black/40 text-white hover:bg-black/65 transition-colors backdrop-blur-sm border border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black/40"
       >
         <ChevronRight className="h-6 w-6" />
       </button>
 
-      {/* Indicadores */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
-        {slides.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setCurrent(i)}
-            aria-label={`Ir para foto ${i + 1}`}
-            className={`h-1.5 rounded-full transition-all duration-300 ${
-              i === current ? "w-6 bg-white" : "w-1.5 bg-white/50"
-            }`}
-          />
-        ))}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-1">
+        {slides.map((_, i) => {
+          const active = i === current;
+          return (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setCurrent(i)}
+              aria-label={`Ir para foto ${i + 1}`}
+              aria-current={active ? "true" : "false"}
+              className="hero-slide-button"
+            >
+              <span
+                className={`h-1.5 rounded-full transition-all duration-300 ${active ? "w-6 bg-white" : "w-1.5 bg-white/50"}`}
+              />
+            </button>
+          );
+        })}
       </div>
 
-      {/* Conteúdo */}
       <div className="relative z-10 container mx-auto px-4 text-center">
         <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-primary-foreground mb-6 opacity-0 animate-fade-in-up">
           Encontre o imóvel <br />
@@ -121,7 +127,11 @@ const Hero = () => {
           className="max-w-xl mx-auto bg-card/95 backdrop-blur-sm rounded-full flex items-center shadow-card p-1.5 opacity-0 animate-fade-in-up"
           style={{ animationDelay: "0.3s" }}
         >
+          <label htmlFor={HERO_SEARCH_INPUT_ID} className="sr-only">
+            Buscar imóveis por bairro, cidade ou tipo
+          </label>
           <input
+            id={HERO_SEARCH_INPUT_ID}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -130,8 +140,10 @@ const Hero = () => {
             className="flex-1 bg-transparent px-5 py-3 font-body text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
           />
           <button
+            type="button"
             onClick={handleSearch}
-            className="bg-accent text-accent-foreground rounded-full p-3 hover:opacity-90 transition-opacity"
+            disabled={!hasQuery}
+            className="bg-accent text-accent-foreground rounded-full p-3 hover:opacity-90 transition-opacity disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-foreground/60"
             aria-label="Pesquisar imóveis"
           >
             <Search className="h-5 w-5" />

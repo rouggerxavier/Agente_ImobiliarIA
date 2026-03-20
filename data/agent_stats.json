@@ -1,5 +1,5 @@
 {
-  "last_reset_date": "2026-03-11",
+  "last_reset_date": "2026-03-13",
   "agents": {
     "agent_paula": {
       "assigned_today": 0,
@@ -10,12 +10,12 @@
       "last_assigned_at": "2026-02-06T13:46:13.363210Z"
     },
     "agent_joao": {
-      "assigned_today": 1,
+      "assigned_today": 0,
       "last_assigned_at": "2026-03-11T12:05:08.318526Z"
     },
     "agent_maria": {
-      "assigned_today": 0,
-      "last_assigned_at": "2026-03-06T14:23:09.061631Z"
+      "assigned_today": 1,
+      "last_assigned_at": "2026-03-13T14:48:41.318077Z"
     }
   }
 }

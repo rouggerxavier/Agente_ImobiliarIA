@@ -5,7 +5,7 @@ const Venda = () => {
     <ImoveisListPage
       tipo="venda"
       titulo="Venda"
-      descricao="Veja os imoveis de venda em layout inspirado no site anterior, com navegacao para a pagina de detalhes."
+      descricao="Veja os imóveis à venda em layout inspirado no site anterior, com navegação para a página de detalhes."
     />
   );
 };

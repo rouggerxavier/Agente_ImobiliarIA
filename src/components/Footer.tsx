@@ -1,47 +1,75 @@
 import { Building2, Mail, MapPin, Phone } from "lucide-react";
 import { Link } from "react-router-dom";
 
+const footerLinks = [
+  { label: "Início", to: "/#inicio" },
+  { label: "Sobre", to: "/sobre" },
+  { label: "Locação", to: "/locacao" },
+  { label: "Venda", to: "/venda" },
+  { label: "Fale Conosco", to: "/fale-conosco" },
+];
+
+const footerContacts = [
+  { icon: Phone, label: "(21) 2549-9000", href: "tel:+552125499000" },
+  { icon: Mail, label: "grankasa@grankasa.com.br", href: "mailto:grankasa@grankasa.com.br" },
+  {
+    icon: MapPin,
+    label: "Copacabana - Rio de Janeiro",
+    href: "https://www.google.com/maps/search/?api=1&query=Av.%20Nossa%20Sra.%20de%20Copacabana,%20749%20-%20Sl%20501%20-%20Copacabana,%20Rio%20de%20Janeiro%20-%20RJ,%2022050-002,%20Brasil",
+    external: true,
+  },
+];
+
 const Footer = () => {
   return (
-    <footer id="contato" className="bg-primary text-primary-foreground py-16">
+    <footer id="contato" className="bg-primary py-16 text-primary-foreground">
       <div className="container mx-auto px-4">
-        <div className="grid md:grid-cols-3 gap-10">
-          <div>
-            <div className="flex items-center gap-2 mb-4">
+        <div className="grid gap-10 md:grid-cols-3">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
               <Building2 className="h-6 w-6 text-accent" />
               <span className="font-display text-xl font-semibold">
                 Gran<span className="text-accent">Kasa</span>
               </span>
             </div>
-            <p className="font-body text-primary-foreground/70 text-sm leading-relaxed">
-              Transformando sonhos em enderecos desde 2010. Atendimento personalizado e os melhores
-              imoveis do mercado.
+            <p className="footer-copy">
+              Transformando sonhos em endereços desde 2010. Atendimento personalizado e os melhores imóveis do
+              mercado.
             </p>
           </div>
 
-          <div>
-            <h4 className="font-display text-lg font-semibold mb-4">Contato</h4>
-            <div className="space-y-3 font-body text-sm text-primary-foreground/70">
-              <p className="flex items-center gap-2"><Phone className="h-4 w-4 text-accent" /> (21) 2549-9000</p>
-              <p className="flex items-center gap-2"><Mail className="h-4 w-4 text-accent" /> grankasa@grankasa.com.br</p>
-              <p className="flex items-center gap-2"><MapPin className="h-4 w-4 text-accent" /> Copacabana - Rio de Janeiro</p>
+          <div className="space-y-4">
+            <h4 className="footer-heading">Contato</h4>
+            <div className="space-y-3">
+              {footerContacts.map(({ icon: Icon, label, href, external }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target={external ? "_blank" : undefined}
+                  rel={external ? "noreferrer" : undefined}
+                  className="footer-link-inline"
+                >
+                  <Icon className="h-4 w-4 text-accent" />
+                  <span>{label}</span>
+                </a>
+              ))}
             </div>
           </div>
 
-          <div>
-            <h4 className="font-display text-lg font-semibold mb-4">Links</h4>
-            <div className="space-y-2 font-body text-sm text-primary-foreground/70">
-              <a href="/#inicio" className="block hover:text-accent transition-colors">Inicio</a>
-              <Link to="/sobre" className="block hover:text-accent transition-colors">Sobre</Link>
-              <Link to="/locacao" className="block hover:text-accent transition-colors">Locacao</Link>
-              <Link to="/venda" className="block hover:text-accent transition-colors">Venda</Link>
-              <Link to="/fale-conosco" className="block hover:text-accent transition-colors">Fale Conosco</Link>
+          <div className="space-y-4">
+            <h4 className="footer-heading">Links</h4>
+            <div className="space-y-2">
+              {footerLinks.map((link) => (
+                <Link key={link.label} to={link.to} className="footer-link">
+                  {link.label}
+                </Link>
+              ))}
             </div>
           </div>
         </div>
 
-        <div className="border-t border-primary-foreground/10 mt-10 pt-6 text-center font-body text-xs text-primary-foreground/50">
-          (c) 2026 GranKasa Imoveis. Todos os direitos reservados.
+        <div className="mt-10 border-t border-primary-foreground/10 pt-6 text-center font-body text-xs text-primary-foreground/50">
+          © {new Date().getFullYear()} GranKasa Imóveis. Todos os direitos reservados.
         </div>
       </div>
     </footer>

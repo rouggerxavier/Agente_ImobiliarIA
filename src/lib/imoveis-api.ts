@@ -26,13 +26,38 @@ export interface Imovel {
   created_at: string;
 }
 
+export class ApiError extends Error {
+  status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
 const BACKEND_URL = (import.meta.env.VITE_BACKEND_URL || "").replace(/\/$/, "");
 
 async function apiGet<T>(path: string): Promise<T> {
   const response = await fetch(`${BACKEND_URL}${path}`);
+
   if (!response.ok) {
-    throw new Error(`Erro ao carregar dados (${response.status})`);
+    let detail = "";
+
+    try {
+      const payload = await response.json();
+      detail = payload?.detail || payload?.message || "";
+    } catch {
+      detail = "";
+    }
+
+    const message = detail
+      ? `${detail} (status ${response.status})`
+      : `Erro ao carregar dados (${response.status})`;
+
+    throw new ApiError(response.status, message);
   }
+
   return response.json() as Promise<T>;
 }
 

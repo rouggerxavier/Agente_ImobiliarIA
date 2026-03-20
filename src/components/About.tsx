@@ -8,25 +8,25 @@ const stats = [
 
 const About = () => {
   return (
-    <section id="sobre" className="py-20 bg-background">
+    <section id="sobre" className="bg-background py-20">
       <div className="container mx-auto px-4">
-        <div className="max-w-3xl mx-auto text-center mb-14">
-          <p className="font-body text-accent text-sm font-semibold uppercase tracking-wider mb-2">Sobre nós</p>
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Sua parceira em cada conquista
-          </h2>
-          <p className="font-body text-muted-foreground text-lg leading-relaxed">
-            A GranKasa é referência no mercado imobiliário, unindo tecnologia e atendimento personalizado para encontrar o imóvel ideal para você e sua família.
+        <div className="mx-auto mb-14 max-w-3xl text-center">
+          <p className="section-kicker">Sobre nós</p>
+          <h2 className="section-title mb-4">Sua parceira em cada conquista</h2>
+          <p className="section-copy text-lg text-muted-foreground">
+            A GranKasa é referência no mercado imobiliário, unindo tecnologia e atendimento personalizado para
+            encontrar o imóvel ideal para você e sua família.
           </p>
         </div>
-        <div className="grid sm:grid-cols-3 gap-8 max-w-2xl mx-auto">
+
+        <div className="mx-auto grid max-w-2xl gap-8 sm:grid-cols-3">
           {stats.map((s) => (
             <div key={s.label} className="text-center">
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-accent/10 mb-4">
+              <div className="surface-stat mb-4 h-14 w-14">
                 <s.icon className="h-6 w-6 text-accent" />
               </div>
               <p className="font-display text-3xl font-bold text-foreground">{s.value}</p>
-              <p className="font-body text-muted-foreground text-sm mt-1">{s.label}</p>
+              <p className="section-copy-muted mt-1">{s.label}</p>
             </div>
           ))}
         </div>

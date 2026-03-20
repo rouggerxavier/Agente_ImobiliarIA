@@ -1,4 +1,4 @@
-"""Endpoints para cadastro e consulta de imoveis."""
+"""Endpoints para cadastro e consulta de imóveis."""
 
 from __future__ import annotations
 
@@ -47,7 +47,7 @@ class ImovelBase(BaseModel):
     @model_validator(mode="after")
     def _validate_pricing(self) -> "ImovelBase":
         if self.tipo_negocio == "locacao" and self.valor_aluguel is None:
-            raise ValueError("Para locacao, informe valor_aluguel.")
+            raise ValueError("Para locação, informe valor_aluguel.")
         if self.tipo_negocio == "venda" and self.valor_compra is None:
             raise ValueError("Para venda, informe valor_compra.")
         return self
@@ -79,7 +79,7 @@ def _query_by_tipo(db: Session, tipo: TipoNegocio, limit: int, offset: int) -> l
 def criar_imovel(payload: ImovelCreate, db: Session = Depends(get_db)) -> Imovel:
     existente = db.query(Imovel).filter(Imovel.codigo == payload.codigo).first()
     if existente:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Codigo de imovel ja cadastrado")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Código de imóvel já cadastrado")
 
     novo_imovel = Imovel(**payload.model_dump())
     db.add(novo_imovel)
@@ -143,7 +143,7 @@ def buscar_imoveis(
 def obter_imovel_por_codigo(codigo: str, db: Session = Depends(get_db)) -> Imovel:
     imovel = db.query(Imovel).filter(Imovel.codigo == codigo).first()
     if imovel is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Imovel nao encontrado")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Imóvel não encontrado")
     return imovel
 
 
@@ -151,5 +151,5 @@ def obter_imovel_por_codigo(codigo: str, db: Session = Depends(get_db)) -> Imove
 def obter_imovel_por_id(imovel_id: int, db: Session = Depends(get_db)) -> Imovel:
     imovel = db.query(Imovel).filter(Imovel.id == imovel_id).first()
     if imovel is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Imovel nao encontrado")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Imóvel não encontrado")
     return imovel

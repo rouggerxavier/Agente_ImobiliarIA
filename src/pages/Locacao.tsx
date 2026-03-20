@@ -4,8 +4,8 @@ const Locacao = () => {
   return (
     <ImoveisListPage
       tipo="locacao"
-      titulo="Locacao"
-      descricao="Consulte opcoes de locacao com o mesmo fluxo do site antigo: lista completa e detalhe por codigo."
+      titulo="Locação"
+      descricao="Confira opções de locação com o mesmo fluxo do site anterior: lista completa e detalhes por código."
     />
   );
 };

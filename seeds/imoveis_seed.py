@@ -13,10 +13,10 @@ SEED_IMOVEIS = [
     {
         "codigo": "7989",
         "tipo_negocio": "locacao",
-        "titulo": "Apartamento em Copacabana para locacao",
+        "titulo": "Apartamento em Copacabana para locação",
         "descricao": (
-            "Apartamento residencial em Copacabana com planta bem distribuida, "
-            "boa iluminacao e acesso rapido ao comercio da regiao."
+            "Apartamento residencial em Copacabana com planta bem distribuída, "
+            "boa iluminação e acesso rápido ao comércio da região."
         ),
         "foto_url": "/imoveis-img/locacao-01.jpg",
         "valor_aluguel": Decimal("4000.00"),
@@ -39,9 +39,9 @@ SEED_IMOVEIS = [
     {
         "codigo": "8012",
         "tipo_negocio": "locacao",
-        "titulo": "Apartamento no Leblon para locacao",
+        "titulo": "Apartamento no Leblon para locação",
         "descricao": (
-            "Imovel residencial no Leblon, ideal para familias que buscam localizacao "
+            "Imóvel residencial no Leblon, ideal para famílias que buscam localização "
             "nobre, conforto interno e mobilidade na Zona Sul."
         ),
         "foto_url": "/imoveis-img/locacao-02.jpg",
@@ -65,9 +65,9 @@ SEED_IMOVEIS = [
     {
         "codigo": "8345",
         "tipo_negocio": "locacao",
-        "titulo": "Apartamento em Copacabana para locacao",
+        "titulo": "Apartamento em Copacabana para locação",
         "descricao": (
-            "Apartamento amplo em Copacabana, proximo a servicos e com planta funcional "
+            "Apartamento amplo em Copacabana, próximo a serviços e com planta funcional "
             "para rotina de moradia e home office."
         ),
         "foto_url": "/imoveis-img/locacao-03.jpg",
@@ -91,10 +91,10 @@ SEED_IMOVEIS = [
     {
         "codigo": "8124",
         "tipo_negocio": "locacao",
-        "titulo": "Apartamento em Ipanema para locacao",
+        "titulo": "Apartamento em Ipanema para locação",
         "descricao": (
-            "Apartamento com varanda em Ipanema, ambientes integrados e boa circulacao "
-            "de ar, ideal para quem deseja morar proximo a praia."
+            "Apartamento com varanda em Ipanema, ambientes integrados e boa circulação "
+            "de ar, ideal para quem deseja morar próximo à praia."
         ),
         "foto_url": "/imoveis-img/locacao-04.jpg",
         "valor_aluguel": Decimal("9800.00"),
@@ -117,10 +117,10 @@ SEED_IMOVEIS = [
     {
         "codigo": "8450",
         "tipo_negocio": "locacao",
-        "titulo": "Apartamento em Botafogo para locacao",
+        "titulo": "Apartamento em Botafogo para locação",
         "descricao": (
-            "Imovel em Botafogo com planta inteligente, excelente para casal ou familia "
-            "pequena, perto de metro e comercio."
+            "Imóvel em Botafogo com planta inteligente, excelente para casal ou família "
+            "pequena, perto de metrô e comércio."
         ),
         "foto_url": "/imoveis-img/locacao-05.jpg",
         "valor_aluguel": Decimal("5200.00"),
@@ -145,8 +145,8 @@ SEED_IMOVEIS = [
         "tipo_negocio": "venda",
         "titulo": "Apartamento em Copacabana para venda",
         "descricao": (
-            "Apartamento para venda em Copacabana com boa relacao custo-beneficio, "
-            "layout versatil e proximidade da praia."
+            "Apartamento para venda em Copacabana com boa relação custo-benefício, "
+            "layout versátil e proximidade da praia."
         ),
         "foto_url": "/imoveis-img/venda-01.jpg",
         "valor_aluguel": None,
@@ -172,7 +172,7 @@ SEED_IMOVEIS = [
         "titulo": "Studio em Copacabana para venda",
         "descricao": (
             "Studio reformado em Copacabana para investimento ou moradia, com "
-            "condominio tradicional e acesso facil ao transporte."
+            "condomínio tradicional e acesso fácil ao transporte."
         ),
         "foto_url": "/imoveis-img/venda-02.jpg",
         "valor_aluguel": None,
@@ -198,7 +198,7 @@ SEED_IMOVEIS = [
         "titulo": "Apartamento na Barra da Tijuca para venda",
         "descricao": (
             "Apartamento moderno na Barra da Tijuca com varanda gourmet e "
-            "infraestrutura completa no condominio."
+            "infraestrutura completa no condomínio."
         ),
         "foto_url": "/imoveis-img/venda-03.jpg",
         "valor_aluguel": None,
@@ -223,8 +223,8 @@ SEED_IMOVEIS = [
         "tipo_negocio": "venda",
         "titulo": "Cobertura em Ipanema para venda",
         "descricao": (
-            "Cobertura duplex em Ipanema com area externa e vista livre, "
-            "projeto ideal para quem busca espaco e exclusividade."
+            "Cobertura duplex em Ipanema com área externa e vista livre, "
+            "projeto ideal para quem busca espaço e exclusividade."
         ),
         "foto_url": "/imoveis-img/venda-04.jpg",
         "valor_aluguel": None,
@@ -250,7 +250,7 @@ SEED_IMOVEIS = [
         "titulo": "Apartamento em Botafogo para venda",
         "descricao": (
             "Apartamento residencial em Botafogo com metragem equilibrada, "
-            "boa ventilacao e facil acesso a servicos."
+            "boa ventilação e fácil acesso a serviços."
         ),
         "foto_url": "/imoveis-img/venda-05.jpg",
         "valor_aluguel": None,
@@ -274,12 +274,22 @@ SEED_IMOVEIS = [
 
 
 def seed_imoveis(db: Session) -> None:
-    """Populate default properties and add missing records by code."""
-    existing_codes = {codigo for (codigo,) in db.query(Imovel.codigo).all()}
-    missing_items = [item for item in SEED_IMOVEIS if item["codigo"] not in existing_codes]
+    """Populate default properties and keep seeded records updated by code."""
+    existing_by_code = {imovel.codigo: imovel for imovel in db.query(Imovel).all()}
+    has_changes = False
 
-    for payload in missing_items:
-        db.add(Imovel(**payload))
+    for payload in SEED_IMOVEIS:
+        existing = existing_by_code.get(payload["codigo"])
 
-    if missing_items:
+        if existing is None:
+            db.add(Imovel(**payload))
+            has_changes = True
+            continue
+
+        for field, value in payload.items():
+            if getattr(existing, field) != value:
+                setattr(existing, field, value)
+                has_changes = True
+
+    if has_changes:
         db.commit()

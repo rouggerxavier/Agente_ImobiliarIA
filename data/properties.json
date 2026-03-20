@@ -1,9 +1,9 @@
 [
   {
     "id": "JP-MAN-001",
-    "titulo": "Apto varanda gourmet Manaira",
-    "cidade": "Joao Pessoa",
-    "bairro": "Manaira",
+    "titulo": "Apto varanda gourmet Manaíra",
+    "cidade": "João Pessoa",
+    "bairro": "Manaíra",
     "tipo": "apartamento",
     "quartos": 2,
     "vagas": 1,
@@ -14,14 +14,14 @@
     "iptu": 220,
     "aceita_pet": true,
     "mobiliado": false,
-    "descricao_curta": "Varanda gourmet, a 3 quadras da orla, pr?dio com piscina.",
-    "url_fotos": "https://placehold.co/600x400?text=Manaira1"
+    "descricao_curta": "Varanda gourmet, a 3 quadras da orla, prédio com piscina.",
+    "url_fotos": "https://placehold.co/600x400?text=Manaíra1"
   },
   {
     "id": "JP-MAN-002",
-    "titulo": "Apto compacto Manaira perto do mar",
-    "cidade": "Joao Pessoa",
-    "bairro": "Manaira",
+    "titulo": "Apto compacto Manaíra perto do mar",
+    "cidade": "João Pessoa",
+    "bairro": "Manaíra",
     "tipo": "apartamento",
     "quartos": 2,
     "vagas": 1,
@@ -32,14 +32,14 @@
     "iptu": 180,
     "aceita_pet": true,
     "mobiliado": true,
-    "descricao_curta": "Andar alto, mobiliado, 400m da praia de Manaira.",
-    "url_fotos": "https://placehold.co/600x400?text=Manaira2"
+    "descricao_curta": "Andar alto, mobiliado, 400m da praia de Manaíra.",
+    "url_fotos": "https://placehold.co/600x400?text=Manaíra2"
   },
   {
     "id": "JP-MAN-003",
-    "titulo": "Apto com coworking em Manaira",
-    "cidade": "Joao Pessoa",
-    "bairro": "Manaira",
+    "titulo": "Apto com coworking em Manaíra",
+    "cidade": "João Pessoa",
+    "bairro": "Manaíra",
     "tipo": "apartamento",
     "quartos": 2,
     "vagas": 2,
@@ -50,14 +50,14 @@
     "iptu": 240,
     "aceita_pet": true,
     "mobiliado": false,
-    "descricao_curta": "Condom?nio com coworking, academia e piscina raia.",
-    "url_fotos": "https://placehold.co/600x400?text=Manaira3"
+    "descricao_curta": "Condomínio com coworking, academia e piscina raia.",
+    "url_fotos": "https://placehold.co/600x400?text=Manaíra3"
   },
   {
     "id": "JP-MAN-101",
-    "titulo": "Apto alto padr?o Manaira vista mar",
-    "cidade": "Joao Pessoa",
-    "bairro": "Manaira",
+    "titulo": "Apto alto padrão Manaíra vista mar",
+    "cidade": "João Pessoa",
+    "bairro": "Manaíra",
     "tipo": "apartamento",
     "quartos": 3,
     "vagas": 2,
@@ -68,14 +68,14 @@
     "iptu": 320,
     "aceita_pet": true,
     "mobiliado": false,
-    "descricao_curta": "Varanda envidra?ada, 2 vagas soltas, andar alto com vista para o mar.",
-    "url_fotos": "https://placehold.co/600x400?text=Manaira4"
+    "descricao_curta": "Varanda envidraçada, 2 vagas soltas, andar alto com vista para o mar.",
+    "url_fotos": "https://placehold.co/600x400?text=Manaíra4"
   },
   {
     "id": "JP-MAN-102",
-    "titulo": "Studio inteligente Manaira",
-    "cidade": "Joao Pessoa",
-    "bairro": "Manaira",
+    "titulo": "Studio inteligente Manaíra",
+    "cidade": "João Pessoa",
+    "bairro": "Manaíra",
     "tipo": "studio",
     "quartos": 1,
     "vagas": 1,
@@ -87,13 +87,13 @@
     "aceita_pet": true,
     "mobiliado": true,
     "descricao_curta": "Studio mobiliado, ideal para investidor, perto de restaurantes.",
-    "url_fotos": "https://placehold.co/600x400?text=Manaira5"
+    "url_fotos": "https://placehold.co/600x400?text=Manaíra5"
   },
   {
     "id": "JP-TAM-001",
-    "titulo": "Apto varanda Tambau p? na areia",
-    "cidade": "Joao Pessoa",
-    "bairro": "Tambau",
+    "titulo": "Apto varanda Tambaú pé na areia",
+    "cidade": "João Pessoa",
+    "bairro": "Tambaú",
     "tipo": "apartamento",
     "quartos": 2,
     "vagas": 1,
@@ -104,14 +104,14 @@
     "iptu": 260,
     "aceita_pet": true,
     "mobiliado": true,
-    "descricao_curta": "Frente mar, varanda gourmet, servi?os pay-per-use.",
-    "url_fotos": "https://placehold.co/600x400?text=Tambau1"
+    "descricao_curta": "Frente mar, varanda gourmet, serviços pay-per-use.",
+    "url_fotos": "https://placehold.co/600x400?text=Tambaú1"
   },
   {
     "id": "JP-TAM-002",
-    "titulo": "Cobertura duplex Tambau",
-    "cidade": "Joao Pessoa",
-    "bairro": "Tambau",
+    "titulo": "Cobertura duplex Tambaú",
+    "cidade": "João Pessoa",
+    "bairro": "Tambaú",
     "tipo": "cobertura",
     "quartos": 3,
     "vagas": 2,
@@ -123,13 +123,13 @@
     "aceita_pet": true,
     "mobiliado": false,
     "descricao_curta": "Rooftop privativo com piscina e churrasqueira.",
-    "url_fotos": "https://placehold.co/600x400?text=Tambau2"
+    "url_fotos": "https://placehold.co/600x400?text=Tambaú2"
   },
   {
     "id": "JP-TAM-003",
-    "titulo": "Flat Tambau servi?os inclu?dos",
-    "cidade": "Joao Pessoa",
-    "bairro": "Tambau",
+    "titulo": "Flat Tambaú serviços incluídos",
+    "cidade": "João Pessoa",
+    "bairro": "Tambaú",
     "tipo": "flat",
     "quartos": 1,
     "vagas": 1,
@@ -141,12 +141,12 @@
     "aceita_pet": false,
     "mobiliado": true,
     "descricao_curta": "Flat em hotelaria, limpeza semanal inclusa.",
-    "url_fotos": "https://placehold.co/600x400?text=Tambau3"
+    "url_fotos": "https://placehold.co/600x400?text=Tambaú3"
   },
   {
     "id": "JP-CAB-001",
-    "titulo": "Apto p? na areia Cabo Branco",
-    "cidade": "Joao Pessoa",
+    "titulo": "Apto pé na areia Cabo Branco",
+    "cidade": "João Pessoa",
     "bairro": "Cabo Branco",
     "tipo": "apartamento",
     "quartos": 2,
@@ -158,13 +158,13 @@
     "iptu": 280,
     "aceita_pet": true,
     "mobiliado": false,
-    "descricao_curta": "Frente mar, varanda, pr?dio novo.",
+    "descricao_curta": "Frente mar, varanda, prédio novo.",
     "url_fotos": "https://placehold.co/600x400?text=CaboBranco1"
   },
   {
     "id": "JP-CAB-002",
-    "titulo": "Studio p? na areia Cabo Branco",
-    "cidade": "Joao Pessoa",
+    "titulo": "Studio pé na areia Cabo Branco",
+    "cidade": "João Pessoa",
     "bairro": "Cabo Branco",
     "tipo": "studio",
     "quartos": 1,
@@ -182,7 +182,7 @@
   {
     "id": "JP-ALT-001",
     "titulo": "Apto clube no Altiplano",
-    "cidade": "Joao Pessoa",
+    "cidade": "João Pessoa",
     "bairro": "Altiplano",
     "tipo": "apartamento",
     "quartos": 3,
@@ -194,13 +194,13 @@
     "iptu": 310,
     "aceita_pet": true,
     "mobiliado": false,
-    "descricao_curta": "Condom?nio clube com lazer completo, vista mar.",
+    "descricao_curta": "Condomínio clube com lazer completo, vista mar.",
     "url_fotos": "https://placehold.co/600x400?text=Altiplano1"
   },
   {
     "id": "JP-ALT-002",
     "titulo": "Casa moderna no Altiplano",
-    "cidade": "Joao Pessoa",
+    "cidade": "João Pessoa",
     "bairro": "Altiplano",
     "tipo": "casa",
     "quartos": 4,
@@ -212,13 +212,13 @@
     "iptu": 980,
     "aceita_pet": true,
     "mobiliado": false,
-    "descricao_curta": "Casa em condom?nio fechado com piscina e energia solar.",
+    "descricao_curta": "Casa em condomínio fechado com piscina e energia solar.",
     "url_fotos": "https://placehold.co/600x400?text=Altiplano2"
   },
   {
     "id": "JP-MIR-001",
     "titulo": "Apto Miramar perto do Shopping",
-    "cidade": "Joao Pessoa",
+    "cidade": "João Pessoa",
     "bairro": "Miramar",
     "tipo": "apartamento",
     "quartos": 2,
@@ -230,13 +230,13 @@
     "iptu": 190,
     "aceita_pet": true,
     "mobiliado": false,
-    "descricao_curta": "Pr?ximo ao Mag Shopping, vista parcial do mar.",
+    "descricao_curta": "Próximo ao Mag Shopping, vista parcial do mar.",
     "url_fotos": "https://placehold.co/600x400?text=Miramar1"
   },
   {
     "id": "JP-BES-001",
     "titulo": "Apto jardim interno Bessa",
-    "cidade": "Joao Pessoa",
+    "cidade": "João Pessoa",
     "bairro": "Bessa",
     "tipo": "apartamento",
     "quartos": 3,
@@ -253,8 +253,8 @@
   },
   {
     "id": "JP-BES-002",
-    "titulo": "Casa t?rrea Bessa rua larga",
-    "cidade": "Joao Pessoa",
+    "titulo": "Casa térrea Bessa rua larga",
+    "cidade": "João Pessoa",
     "bairro": "Bessa",
     "tipo": "casa",
     "quartos": 3,
@@ -266,13 +266,13 @@
     "iptu": 360,
     "aceita_pet": true,
     "mobiliado": false,
-    "descricao_curta": "Casa ventilada, rua larga, po?o artesiano.",
+    "descricao_curta": "Casa ventilada, rua larga, poço artesiano.",
     "url_fotos": "https://placehold.co/600x400?text=Bessa2"
   },
   {
     "id": "JP-BES-003",
     "titulo": "Studio AirBnB ready Bessa",
-    "cidade": "Joao Pessoa",
+    "cidade": "João Pessoa",
     "bairro": "Bessa",
     "tipo": "studio",
     "quartos": 1,
@@ -284,13 +284,13 @@
     "iptu": 130,
     "aceita_pet": false,
     "mobiliado": true,
-    "descricao_curta": "Studio pronto para loca??o por temporada.",
+    "descricao_curta": "Studio pronto para locação por temporada.",
     "url_fotos": "https://placehold.co/600x400?text=Bessa3"
   },
   {
     "id": "JP-CAB-003",
-    "titulo": "Casa p? na praia Cabo Branco",
-    "cidade": "Joao Pessoa",
+    "titulo": "Casa pé na praia Cabo Branco",
+    "cidade": "João Pessoa",
     "bairro": "Cabo Branco",
     "tipo": "casa",
     "quartos": 4,
@@ -307,8 +307,8 @@
   },
   {
     "id": "JP-TOR-001",
-    "titulo": "Apto Torre colado na Epit?cio",
-    "cidade": "Joao Pessoa",
+    "titulo": "Apto Torre colado na Epitácio",
+    "cidade": "João Pessoa",
     "bairro": "Torre",
     "tipo": "apartamento",
     "quartos": 2,
@@ -320,13 +320,13 @@
     "iptu": 150,
     "aceita_pet": true,
     "mobiliado": false,
-    "descricao_curta": "Pr?ximo ? Epit?cio, condom?nio com sal?o de festas e piscina.",
+    "descricao_curta": "Próximo à Epitácio, condomínio com salão de festas e piscina.",
     "url_fotos": "https://placehold.co/600x400?text=Torre1"
   },
   {
     "id": "JP-JAG-001",
     "titulo": "Casa Jaguaribe ampla",
-    "cidade": "Joao Pessoa",
+    "cidade": "João Pessoa",
     "bairro": "Jaguaribe",
     "tipo": "casa",
     "quartos": 4,
@@ -338,13 +338,13 @@
     "iptu": 420,
     "aceita_pet": true,
     "mobiliado": false,
-    "descricao_curta": "Casa ampla, ideal para consult?rios ou moradia.",
+    "descricao_curta": "Casa ampla, ideal para consultórios ou moradia.",
     "url_fotos": "https://placehold.co/600x400?text=Jaguaribe1"
   },
   {
     "id": "JP-JAG-002",
     "titulo": "Apto Jaguaribe perto da Lagoa",
-    "cidade": "Joao Pessoa",
+    "cidade": "João Pessoa",
     "bairro": "Jaguaribe",
     "tipo": "apartamento",
     "quartos": 2,
@@ -362,7 +362,7 @@
   {
     "id": "JP-GEI-001",
     "titulo": "Garden Geisel com quintal",
-    "cidade": "Joao Pessoa",
+    "cidade": "João Pessoa",
     "bairro": "Geisel",
     "tipo": "apartamento",
     "quartos": 2,
@@ -379,9 +379,9 @@
   },
   {
     "id": "CG-CAT-001",
-    "titulo": "Apto Catole pr?ximo ao Partage",
+    "titulo": "Apto Catolé próximo ao Partage",
     "cidade": "Campina Grande",
-    "bairro": "Catole",
+    "bairro": "Catolé",
     "tipo": "apartamento",
     "quartos": 3,
     "vagas": 2,
@@ -392,12 +392,12 @@
     "iptu": 210,
     "aceita_pet": true,
     "mobiliado": false,
-    "descricao_curta": "Pr?ximo ao shopping, varanda gourmet.",
+    "descricao_curta": "Próximo ao shopping, varanda gourmet.",
     "url_fotos": "https://placehold.co/600x400?text=CatoLe1"
   },
   {
     "id": "CG-ALT-001",
-    "titulo": "Casa Alto Branco com escrit?rio",
+    "titulo": "Casa Alto Branco com escritório",
     "cidade": "Campina Grande",
     "bairro": "Alto Branco",
     "tipo": "casa",
@@ -410,7 +410,7 @@
     "iptu": 310,
     "aceita_pet": true,
     "mobiliado": false,
-    "descricao_curta": "Casa com escrit?rio e varanda ampla.",
+    "descricao_curta": "Casa com escritório e varanda ampla.",
     "url_fotos": "https://placehold.co/600x400?text=AltoBranco1"
   },
   {
@@ -446,7 +446,7 @@
     "iptu": 200,
     "aceita_pet": false,
     "mobiliado": true,
-    "descricao_curta": "Studio mobiliado, servi?os de flat.",
+    "descricao_curta": "Studio mobiliado, serviços de flat.",
     "url_fotos": "https://placehold.co/600x400?text=BoaViagem2"
   },
   {
@@ -505,7 +505,7 @@
   },
   {
     "id": "NA-TIA-001",
-    "titulo": "Casa Tirol com escrit?rio",
+    "titulo": "Casa Tirol com escritório",
     "cidade": "Natal",
     "bairro": "Tirol",
     "tipo": "casa",
@@ -518,14 +518,14 @@
     "iptu": 800,
     "aceita_pet": true,
     "mobiliado": false,
-    "descricao_curta": "Casa ampla, ideal para cl?nica ou fam?lia grande.",
+    "descricao_curta": "Casa ampla, ideal para clínica ou família grande.",
     "url_fotos": "https://placehold.co/600x400?text=Tirol1"
   },
   {
     "id": "JP-BAN-001",
-    "titulo": "Apto Bancarios perto da UFPB",
-    "cidade": "Joao Pessoa",
-    "bairro": "Bancarios",
+    "titulo": "Apto Bancários perto da UFPB",
+    "cidade": "João Pessoa",
+    "bairro": "Bancários",
     "tipo": "apartamento",
     "quartos": 2,
     "vagas": 1,
@@ -536,14 +536,14 @@
     "iptu": 100,
     "aceita_pet": true,
     "mobiliado": false,
-    "descricao_curta": "Pr?ximo ? UFPB, ideal para estudantes.",
-    "url_fotos": "https://placehold.co/600x400?text=Bancarios1"
+    "descricao_curta": "Próximo à UFPB, ideal para estudantes.",
+    "url_fotos": "https://placehold.co/600x400?text=Bancários1"
   },
   {
     "id": "JP-BAN-002",
-    "titulo": "Cobertura Bancarios com terra?o",
-    "cidade": "Joao Pessoa",
-    "bairro": "Bancarios",
+    "titulo": "Cobertura Bancários com terraço",
+    "cidade": "João Pessoa",
+    "bairro": "Bancários",
     "tipo": "cobertura",
     "quartos": 3,
     "vagas": 2,
@@ -554,13 +554,13 @@
     "iptu": 260,
     "aceita_pet": true,
     "mobiliado": false,
-    "descricao_curta": "Cobertura com terra?o e churrasqueira, vista UFPB.",
-    "url_fotos": "https://placehold.co/600x400?text=Bancarios2"
+    "descricao_curta": "Cobertura com terraço e churrasqueira, vista UFPB.",
+    "url_fotos": "https://placehold.co/600x400?text=Bancários2"
   },
   {
     "id": "JP-CRI-001",
     "titulo": "Casa Cristo Redentor reformada",
-    "cidade": "Joao Pessoa",
+    "cidade": "João Pessoa",
     "bairro": "Cristo Redentor",
     "tipo": "casa",
     "quartos": 3,
@@ -577,7 +577,7 @@
   },
   {
     "id": "JP-TAR-001",
-    "titulo": "Terreno em Intermares pr?ximo ao mar",
+    "titulo": "Terreno em Intermares próximo ao mar",
     "cidade": "Cabedelo",
     "bairro": "Intermares",
     "tipo": "terreno",
@@ -590,14 +590,14 @@
     "iptu": 900,
     "aceita_pet": false,
     "mobiliado": false,
-    "descricao_curta": "Terreno plano 12x30 pr?ximo ? orla de Intermares.",
+    "descricao_curta": "Terreno plano 12x30 próximo à orla de Intermares.",
     "url_fotos": "https://placehold.co/600x400?text=Intermares1"
   },
   {
     "id": "JP-TAM-004",
-    "titulo": "Apto Tambau 1 quarto pr?tico",
-    "cidade": "Joao Pessoa",
-    "bairro": "Tambau",
+    "titulo": "Apto Tambaú 1 quarto prático",
+    "cidade": "João Pessoa",
+    "bairro": "Tambaú",
     "tipo": "apartamento",
     "quartos": 1,
     "vagas": 1,
@@ -609,12 +609,12 @@
     "aceita_pet": false,
     "mobiliado": true,
     "descricao_curta": "Ideal para temporada, a 200m do mar.",
-    "url_fotos": "https://placehold.co/600x400?text=Tambau4"
+    "url_fotos": "https://placehold.co/600x400?text=Tambaú4"
   },
   {
     "id": "JP-MIR-002",
     "titulo": "Apto Miramar 3q com varanda",
-    "cidade": "Joao Pessoa",
+    "cidade": "João Pessoa",
     "bairro": "Miramar",
     "tipo": "apartamento",
     "quartos": 3,
@@ -626,13 +626,13 @@
     "iptu": 300,
     "aceita_pet": true,
     "mobiliado": false,
-    "descricao_curta": "Planta ampla, varanda em L, perto do Espa?o Cultural.",
+    "descricao_curta": "Planta ampla, varanda em L, perto do Espaço Cultural.",
     "url_fotos": "https://placehold.co/600x400?text=Miramar2"
   },
   {
     "id": "JP-BES-004",
-    "titulo": "Apto Bessa 2q econ?mico",
-    "cidade": "Joao Pessoa",
+    "titulo": "Apto Bessa 2q econômico",
+    "cidade": "João Pessoa",
     "bairro": "Bessa",
     "tipo": "apartamento",
     "quartos": 2,
@@ -644,13 +644,13 @@
     "iptu": 110,
     "aceita_pet": true,
     "mobiliado": false,
-    "descricao_curta": "Bessa pr?ximo ? praia, boa ventila??o.",
+    "descricao_curta": "Bessa próximo à praia, boa ventilação.",
     "url_fotos": "https://placehold.co/600x400?text=Bessa4"
   },
   {
     "id": "JP-CAB-004",
     "titulo": "Flat Cabo Branco rooftop",
-    "cidade": "Joao Pessoa",
+    "cidade": "João Pessoa",
     "bairro": "Cabo Branco",
     "tipo": "flat",
     "quartos": 1,
@@ -667,9 +667,9 @@
   },
   {
     "id": "JP-MAN-004",
-    "titulo": "Apto Manaira 3q com varanda ampla",
-    "cidade": "Joao Pessoa",
-    "bairro": "Manaira",
+    "titulo": "Apto Manaíra 3q com varanda ampla",
+    "cidade": "João Pessoa",
+    "bairro": "Manaíra",
     "tipo": "apartamento",
     "quartos": 3,
     "vagas": 2,
@@ -680,14 +680,14 @@
     "iptu": 300,
     "aceita_pet": true,
     "mobiliado": false,
-    "descricao_curta": "Varanda gourmet grande, rua tranquila pr?xima ao mar.",
-    "url_fotos": "https://placehold.co/600x400?text=Manaira6"
+    "descricao_curta": "Varanda gourmet grande, rua tranquila próxima ao mar.",
+    "url_fotos": "https://placehold.co/600x400?text=Manaíra6"
   },
   {
     "id": "JP-MAN-005",
-    "titulo": "Kitnet Manaira pr?tica",
-    "cidade": "Joao Pessoa",
-    "bairro": "Manaira",
+    "titulo": "Kitnet Manaíra prática",
+    "cidade": "João Pessoa",
+    "bairro": "Manaíra",
     "tipo": "kitnet",
     "quartos": 1,
     "vagas": 0,
@@ -698,13 +698,13 @@
     "iptu": 90,
     "aceita_pet": false,
     "mobiliado": true,
-    "descricao_curta": "Kitnet pr?tica perto da Avenida Rui Carneiro.",
-    "url_fotos": "https://placehold.co/600x400?text=Manaira7"
+    "descricao_curta": "Kitnet prática perto da Avenida Rui Carneiro.",
+    "url_fotos": "https://placehold.co/600x400?text=Manaíra7"
   },
   {
     "id": "JP-TOR-002",
     "titulo": "Apto Torre 3q ventilado",
-    "cidade": "Joao Pessoa",
+    "cidade": "João Pessoa",
     "bairro": "Torre",
     "tipo": "apartamento",
     "quartos": 3,
@@ -716,13 +716,13 @@
     "iptu": 240,
     "aceita_pet": true,
     "mobiliado": false,
-    "descricao_curta": "Apto nascente, ventilado, pr?ximo ? farm?cia e mercado.",
+    "descricao_curta": "Apto nascente, ventilado, próximo à farmácia e mercado.",
     "url_fotos": "https://placehold.co/600x400?text=Torre2"
   },
   {
     "id": "JP-ALT-003",
     "titulo": "Apto Altiplano 2q compacto",
-    "cidade": "Joao Pessoa",
+    "cidade": "João Pessoa",
     "bairro": "Altiplano",
     "tipo": "apartamento",
     "quartos": 2,
@@ -734,13 +734,13 @@
     "iptu": 180,
     "aceita_pet": true,
     "mobiliado": false,
-    "descricao_curta": "Apto compacto em condom?nio clube no Altiplano.",
+    "descricao_curta": "Apto compacto em condomínio clube no Altiplano.",
     "url_fotos": "https://placehold.co/600x400?text=Altiplano3"
   },
   {
     "id": "JP-BES-005",
     "titulo": "Casa Bessa com piscina",
-    "cidade": "Joao Pessoa",
+    "cidade": "João Pessoa",
     "bairro": "Bessa",
     "tipo": "casa",
     "quartos": 4,
@@ -752,13 +752,13 @@
     "iptu": 520,
     "aceita_pet": true,
     "mobiliado": false,
-    "descricao_curta": "Casa com piscina e ?rea gourmet, rua pavimentada.",
+    "descricao_curta": "Casa com piscina e área gourmet, rua pavimentada.",
     "url_fotos": "https://placehold.co/600x400?text=Bessa5"
   },
   {
     "id": "JP-MIR-003",
-    "titulo": "Studio Miramar pr?ximo ao Espa?o Cultural",
-    "cidade": "Joao Pessoa",
+    "titulo": "Studio Miramar próximo ao Espaço Cultural",
+    "cidade": "João Pessoa",
     "bairro": "Miramar",
     "tipo": "studio",
     "quartos": 1,
@@ -770,14 +770,14 @@
     "iptu": 130,
     "aceita_pet": false,
     "mobiliado": true,
-    "descricao_curta": "Studio mobiliado, varanda, perto do Espa?o Cultural.",
+    "descricao_curta": "Studio mobiliado, varanda, perto do Espaço Cultural.",
     "url_fotos": "https://placehold.co/600x400?text=Miramar3"
   },
   {
     "id": "JP-TAM-005",
-    "titulo": "Apto Tambau 2q decorado",
-    "cidade": "Joao Pessoa",
-    "bairro": "Tambau",
+    "titulo": "Apto Tambaú 2q decorado",
+    "cidade": "João Pessoa",
+    "bairro": "Tambaú",
     "tipo": "apartamento",
     "quartos": 2,
     "vagas": 1,
@@ -789,13 +789,13 @@
     "aceita_pet": true,
     "mobiliado": true,
     "descricao_curta": "Apto decorado a 150m do mar.",
-    "url_fotos": "https://placehold.co/600x400?text=Tambau5"
+    "url_fotos": "https://placehold.co/600x400?text=Tambaú5"
   },
   {
     "id": "JP-MAN-006",
-    "titulo": "Apto Manaira 2q econ?mico",
-    "cidade": "Joao Pessoa",
-    "bairro": "Manaira",
+    "titulo": "Apto Manaíra 2q econômico",
+    "cidade": "João Pessoa",
+    "bairro": "Manaíra",
     "tipo": "apartamento",
     "quartos": 2,
     "vagas": 1,
@@ -806,14 +806,14 @@
     "iptu": 150,
     "aceita_pet": true,
     "mobiliado": false,
-    "descricao_curta": "Apto econ?mico perto do Mag Shopping.",
-    "url_fotos": "https://placehold.co/600x400?text=Manaira8"
+    "descricao_curta": "Apto econômico perto do Mag Shopping.",
+    "url_fotos": "https://placehold.co/600x400?text=Manaíra8"
   },
   {
     "id": "JP-MAN-007",
-    "titulo": "Apto Manaira 2q mobiliado",
-    "cidade": "Joao Pessoa",
-    "bairro": "Manaira",
+    "titulo": "Apto Manaíra 2q mobiliado",
+    "cidade": "João Pessoa",
+    "bairro": "Manaíra",
     "tipo": "apartamento",
     "quartos": 2,
     "vagas": 1,
@@ -825,6 +825,8 @@
     "aceita_pet": true,
     "mobiliado": true,
     "descricao_curta": "Mobiliado completo, ar e eletros, perto da orla.",
-    "url_fotos": "https://placehold.co/600x400?text=Manaira9"
+    "url_fotos": "https://placehold.co/600x400?text=Manaíra9"
   }
 ]
+
+

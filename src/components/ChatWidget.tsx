@@ -3,6 +3,8 @@ import { useState, useRef, useEffect } from "react";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
 const BACKEND_API_KEY = import.meta.env.VITE_BACKEND_API_KEY as string | undefined;
+const CHAT_PANEL_ID = "chat-widget-panel";
+const CHAT_INPUT_ID = "chat-message-input";
 
 interface Message {
   role: "user" | "agent";
@@ -12,7 +14,7 @@ interface Message {
 const ChatWidget = () => {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { role: "agent", text: "Olá! 👋 Sou o assistente virtual da GranKasa. Como posso ajudar você hoje?" },
+    { role: "agent", text: "Ola! Sou o assistente virtual da GranKasa. Como posso ajudar voce hoje?" },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -57,7 +59,7 @@ const ChatWidget = () => {
       const detail = error instanceof Error ? ` (${error.message})` : "";
       setMessages((prev) => [
         ...prev,
-        { role: "agent", text: `Desculpe, não consegui me conectar ao servidor. Tente novamente${detail}.` },
+        { role: "agent", text: `Desculpe, nao consegui me conectar ao servidor. Tente novamente${detail}.` },
       ]);
     } finally {
       setLoading(false);
@@ -72,21 +74,27 @@ const ChatWidget = () => {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed z-50 bottom-4 left-4 right-4 sm:bottom-6 sm:right-6 sm:left-auto">
       {open && (
-        <div className="mb-4 w-80 sm:w-96 bg-card rounded-2xl shadow-chat border border-border overflow-hidden animate-fade-in-up">
-          {/* Header */}
+        <div
+          id={CHAT_PANEL_ID}
+          className="mb-4 ml-auto w-full max-w-[calc(100vw-2rem)] sm:w-96 sm:max-w-none bg-card rounded-2xl shadow-chat border border-border overflow-hidden animate-fade-in-up"
+        >
           <div className="bg-primary px-5 py-4 flex items-center justify-between">
             <div>
               <p className="font-display text-sm font-semibold text-primary-foreground">Assistente GranKasa</p>
-              <p className="font-body text-xs text-primary-foreground/60">Powered by IA • Online</p>
+              <p className="font-body text-xs text-primary-foreground/60">Powered by IA � Online</p>
             </div>
-            <button onClick={() => setOpen(false)} className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">
+            <button
+              type="button"
+              aria-label="Fechar chat"
+              onClick={() => setOpen(false)}
+              className="text-primary-foreground/60 hover:text-primary-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-primary"
+            >
               <X className="h-5 w-5" />
             </button>
           </div>
 
-          {/* Messages */}
           <div className="h-72 p-4 overflow-y-auto space-y-3">
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
@@ -111,9 +119,12 @@ const ChatWidget = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
           <div className="border-t border-border px-3 py-3 flex items-center gap-2">
+            <label htmlFor={CHAT_INPUT_ID} className="sr-only">
+              Digite sua mensagem para o assistente virtual
+            </label>
             <input
+              id={CHAT_INPUT_ID}
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -123,9 +134,11 @@ const ChatWidget = () => {
               disabled={loading}
             />
             <button
+              type="button"
               onClick={sendMessage}
               disabled={loading || !input.trim()}
-              className="bg-accent text-accent-foreground rounded-full p-2 hover:opacity-90 transition-opacity disabled:opacity-50"
+              aria-label="Enviar mensagem"
+              className="bg-accent text-accent-foreground rounded-full p-2 hover:opacity-90 transition-opacity disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
             >
               <Send className="h-4 w-4" />
             </button>
@@ -133,11 +146,13 @@ const ChatWidget = () => {
         </div>
       )}
 
-      {/* FAB */}
       <button
+        type="button"
         onClick={() => setOpen(!open)}
-        className="bg-accent text-accent-foreground rounded-full p-4 shadow-chat hover:opacity-90 transition-opacity animate-pulse-glow"
-        aria-label="Abrir chat com assistente virtual"
+        className="bg-accent text-accent-foreground rounded-full p-4 shadow-chat hover:opacity-90 transition-opacity animate-pulse-glow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+        aria-label={open ? "Fechar chat com assistente virtual" : "Abrir chat com assistente virtual"}
+        aria-expanded={open}
+        aria-controls={CHAT_PANEL_ID}
       >
         {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
       </button>

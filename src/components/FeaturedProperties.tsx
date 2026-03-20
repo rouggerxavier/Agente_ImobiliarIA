@@ -1,8 +1,11 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Bath, BedDouble, MapPin, Maximize } from "lucide-react";
 
-import { fetchImoveisPorTipo, Imovel } from "@/lib/imoveis-api";
+import AsyncStateCard from "@/components/AsyncStateCard";
+import PropertyCard from "@/components/PropertyCard";
+import PropertyGridSkeleton from "@/components/PropertyGridSkeleton";
+import { Button } from "@/components/ui/button";
+import { ApiError, fetchImoveisPorTipo, Imovel } from "@/lib/imoveis-api";
 
 const formatCurrency = (value: string | null) => {
   if (!value) return "-";
@@ -13,112 +16,136 @@ const formatCurrency = (value: string | null) => {
   }).format(Number(value));
 };
 
-const ImovelCard = ({ imovel, tipo }: { imovel: Imovel; tipo: "locacao" | "venda" }) => {
+const PropertyPreview = ({ imovel, tipo }: { imovel: Imovel; tipo: "locacao" | "venda" }) => {
   const valor = tipo === "locacao" ? imovel.valor_aluguel : imovel.valor_compra;
   return (
-    <Link to={`/imovel/${imovel.codigo}`} className="group block">
-      <div className="bg-card rounded-lg overflow-hidden shadow-card hover:shadow-card-hover transition-shadow duration-300">
-        <div className="relative overflow-hidden aspect-[4/3]">
-          <img
-            src={imovel.foto_url}
-            alt={imovel.titulo}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            loading="lazy"
-            onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/imoveis-img/fallback.jpg"; }}
-          />
-          <span className="absolute top-3 left-3 bg-accent text-accent-foreground font-body text-xs font-semibold px-3 py-1 rounded-full">
-            {formatCurrency(valor)}{tipo === "locacao" && "/mês"}
-          </span>
-        </div>
-        <div className="p-5">
-          <h3 className="font-display text-lg font-semibold text-card-foreground mb-1">{imovel.titulo}</h3>
-          <p className="flex items-center gap-1 text-muted-foreground text-sm font-body mb-4">
-            <MapPin className="h-3.5 w-3.5" /> {imovel.bairro}, {imovel.cidade}
-          </p>
-          <div className="flex items-center gap-4 text-muted-foreground text-sm font-body border-t border-border pt-4">
-            <span className="flex items-center gap-1"><BedDouble className="h-4 w-4" /> {imovel.numero_quartos ?? 0}</span>
-            <span className="flex items-center gap-1"><Bath className="h-4 w-4" /> {imovel.numero_banheiros ?? 0}</span>
-            <span className="flex items-center gap-1"><Maximize className="h-4 w-4" /> {Number(imovel.area_m2).toLocaleString("pt-BR")}m²</span>
-          </div>
-        </div>
-      </div>
-    </Link>
+    <PropertyCard
+      image={imovel.foto_url}
+      title={imovel.titulo}
+      location={`${imovel.bairro}, ${imovel.cidade}`}
+      price={`${formatCurrency(valor)}${tipo === "locacao" ? "/mês" : ""}`}
+      beds={imovel.numero_quartos ?? 0}
+      baths={imovel.numero_banheiros ?? 0}
+      area={Number(imovel.area_m2)}
+      href={`/imovel/${imovel.codigo}`}
+    />
   );
 };
 
-const SkeletonGrid = () => (
-  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-    {[...Array(3)].map((_, i) => (
-      <div key={i} className="h-64 rounded-lg bg-card/50 animate-pulse" />
-    ))}
-  </div>
-);
-
 const FeaturedProperties = () => {
-  const { data: locacao, isLoading: loadingLocacao } = useQuery({
+  const {
+    data: locacao,
+    isLoading: loadingLocacao,
+    isError: errorLocacao,
+    refetch: refetchLocacao,
+  } = useQuery({
     queryKey: ["imoveis", "locacao"],
     queryFn: () => fetchImoveisPorTipo("locacao"),
+    retry: (failureCount, error) => {
+      if (error instanceof ApiError && error.status === 404) {
+        return false;
+      }
+      return failureCount < 1;
+    },
   });
-  const { data: venda, isLoading: loadingVenda } = useQuery({
+
+  const {
+    data: venda,
+    isLoading: loadingVenda,
+    isError: errorVenda,
+    refetch: refetchVenda,
+  } = useQuery({
     queryKey: ["imoveis", "venda"],
     queryFn: () => fetchImoveisPorTipo("venda"),
+    retry: (failureCount, error) => {
+      if (error instanceof ApiError && error.status === 404) {
+        return false;
+      }
+      return failureCount < 1;
+    },
   });
 
   return (
     <>
-      {/* Seção Locação */}
-      <section id="locacao-destaque" className="py-20 bg-secondary">
+      <section id="locacao-destaque" className="bg-secondary py-20">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-14">
-            <p className="font-body text-accent text-sm font-semibold uppercase tracking-wider mb-2">Destaques</p>
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">
-              Imóveis para Locação
-            </h2>
+          <div className="mb-14 text-center">
+            <p className="section-kicker">Destaques</p>
+            <h2 className="section-title">Imóveis para Locação</h2>
           </div>
+
           {loadingLocacao ? (
-            <SkeletonGrid />
+            <PropertyGridSkeleton count={3} />
+          ) : errorLocacao ? (
+            <AsyncStateCard
+              tone="error"
+              title="Não foi possível carregar os imóveis em destaque."
+              description="Tente novamente para ver os imóveis de locação."
+              action={
+                <Button type="button" variant="outline" className="mt-4" onClick={() => refetchLocacao()}>
+                  Tentar novamente
+                </Button>
+              }
+            />
+          ) : !locacao || locacao.length === 0 ? (
+            <AsyncStateCard
+              tone="neutral"
+              title="Nenhum imóvel em destaque no momento."
+              description="Novos imóveis de locação podem entrar em destaque a qualquer momento."
+            />
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {locacao?.slice(0, 3).map((imovel) => (
-                <ImovelCard key={imovel.codigo} imovel={imovel} tipo="locacao" />
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+              {locacao.slice(0, 3).map((imovel) => (
+                <PropertyPreview key={imovel.codigo} imovel={imovel} tipo="locacao" />
               ))}
             </div>
           )}
-          <div className="text-center mt-10">
-            <Link
-              to="/locacao"
-              className="inline-block font-body text-sm font-semibold text-accent hover:underline"
-            >
-              Ver todos os imóveis para locação →
+
+          <div className="mt-10 text-center">
+            <Link to="/locacao" className="section-link">
+              Ver todos os imóveis para locação
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Seção Venda */}
-      <section id="venda-destaque" className="py-20 bg-background">
+      <section id="venda-destaque" className="bg-background py-20">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-14">
-            <p className="font-body text-accent text-sm font-semibold uppercase tracking-wider mb-2">Destaques</p>
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">
-              Imóveis para Venda
-            </h2>
+          <div className="mb-14 text-center">
+            <p className="section-kicker">Destaques</p>
+            <h2 className="section-title">Imóveis para Venda</h2>
           </div>
+
           {loadingVenda ? (
-            <SkeletonGrid />
+            <PropertyGridSkeleton count={3} />
+          ) : errorVenda ? (
+            <AsyncStateCard
+              tone="error"
+              title="Não foi possível carregar os imóveis em destaque."
+              description="Tente novamente para ver os imóveis de venda."
+              action={
+                <Button type="button" variant="outline" className="mt-4" onClick={() => refetchVenda()}>
+                  Tentar novamente
+                </Button>
+              }
+            />
+          ) : !venda || venda.length === 0 ? (
+            <AsyncStateCard
+              tone="neutral"
+              title="Nenhum imóvel em destaque no momento."
+              description="Novos imóveis de venda podem entrar em destaque a qualquer momento."
+            />
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {venda?.slice(0, 3).map((imovel) => (
-                <ImovelCard key={imovel.codigo} imovel={imovel} tipo="venda" />
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+              {venda.slice(0, 3).map((imovel) => (
+                <PropertyPreview key={imovel.codigo} imovel={imovel} tipo="venda" />
               ))}
             </div>
           )}
-          <div className="text-center mt-10">
-            <Link
-              to="/venda"
-              className="inline-block font-body text-sm font-semibold text-accent hover:underline"
-            >
-              Ver todos os imóveis para venda →
+
+          <div className="mt-10 text-center">
+            <Link to="/venda" className="section-link">
+              Ver todos os imóveis para venda
             </Link>
           </div>
         </div>
@@ -128,3 +155,4 @@ const FeaturedProperties = () => {
 };
 
 export default FeaturedProperties;
+

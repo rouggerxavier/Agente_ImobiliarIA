@@ -1,9 +1,31 @@
 import { Building2, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+
+const navItems = [
+  { label: "Início", to: "/#inicio" },
+  { label: "Locação", to: "/locacao" },
+  { label: "Venda", to: "/venda" },
+  { label: "Sobre", to: "/sobre" },
+  { label: "Fale Conosco", to: "/fale-conosco" },
+];
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
+  const mobileMenuId = "mobile-nav-menu";
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [open]);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
@@ -15,46 +37,36 @@ const Navbar = () => {
           </span>
         </Link>
 
-        <div className="hidden md:flex items-center gap-8 font-body text-sm font-medium">
-          <a href="/#inicio" className="text-muted-foreground hover:text-foreground transition-colors">
-            Inicio
-          </a>
-          <Link to="/locacao" className="text-muted-foreground hover:text-foreground transition-colors">
-            Locacao
-          </Link>
-          <Link to="/venda" className="text-muted-foreground hover:text-foreground transition-colors">
-            Venda
-          </Link>
-          <Link to="/sobre" className="text-muted-foreground hover:text-foreground transition-colors">
-            Sobre
-          </Link>
-          <Link to="/fale-conosco" className="text-muted-foreground hover:text-foreground transition-colors">
-            Fale Conosco
-          </Link>
+        <div className="hidden items-center gap-8 font-body text-sm font-medium md:flex">
+          {navItems.map((item) => (
+            <Link key={item.label} to={item.to} className="nav-link">
+              {item.label}
+            </Link>
+          ))}
         </div>
 
-        <button className="md:hidden text-foreground" onClick={() => setOpen(!open)}>
+        <button
+          type="button"
+          className="md:hidden text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          onClick={() => setOpen(!open)}
+          aria-label={open ? "Fechar menu principal" : "Abrir menu principal"}
+          aria-expanded={open}
+          aria-controls={mobileMenuId}
+        >
           {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
       </div>
 
       {open && (
-        <div className="md:hidden bg-background border-b border-border px-4 pb-4 font-body text-sm font-medium space-y-3">
-          <a href="/#inicio" className="block text-muted-foreground hover:text-foreground" onClick={() => setOpen(false)}>
-            Inicio
-          </a>
-          <Link to="/locacao" className="block text-muted-foreground hover:text-foreground" onClick={() => setOpen(false)}>
-            Locacao
-          </Link>
-          <Link to="/venda" className="block text-muted-foreground hover:text-foreground" onClick={() => setOpen(false)}>
-            Venda
-          </Link>
-          <Link to="/sobre" className="block text-muted-foreground hover:text-foreground" onClick={() => setOpen(false)}>
-            Sobre
-          </Link>
-          <Link to="/fale-conosco" className="block text-muted-foreground hover:text-foreground" onClick={() => setOpen(false)}>
-            Fale Conosco
-          </Link>
+        <div
+          id={mobileMenuId}
+          className="md:hidden bg-background border-b border-border px-4 pb-4 font-body text-sm font-medium space-y-3"
+        >
+          {navItems.map((item) => (
+            <Link key={item.label} to={item.to} className="nav-link-mobile" onClick={() => setOpen(false)}>
+              {item.label}
+            </Link>
+          ))}
         </div>
       )}
     </nav>
