@@ -1,13 +1,25 @@
-import { Building2, Menu, X } from "lucide-react";
+﻿import { Building2, Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-const navItems = [
-  { label: "Início", to: "/#inicio" },
-  { label: "Locação", to: "/locacao" },
+type NavItem = {
+  label: string;
+  to?: string;
+  href?: string;
+  external?: boolean;
+};
+
+const navItems: NavItem[] = [
+  { label: "Inicio", to: "/#inicio" },
+  { label: "Locacao", to: "/locacao" },
   { label: "Venda", to: "/venda" },
   { label: "Sobre", to: "/sobre" },
   { label: "Fale Conosco", to: "/fale-conosco" },
+  {
+    label: "Painel do Cliente",
+    href: "https://docsuite.com.br/login/granka",
+    external: true,
+  },
 ];
 
 const Navbar = () => {
@@ -38,11 +50,17 @@ const Navbar = () => {
         </Link>
 
         <div className="hidden items-center gap-8 font-body text-sm font-medium md:flex">
-          {navItems.map((item) => (
-            <Link key={item.label} to={item.to} className="nav-link">
-              {item.label}
-            </Link>
-          ))}
+          {navItems.map((item) =>
+            item.external ? (
+              <a key={item.label} href={item.href} target="_blank" rel="noreferrer" className="nav-link">
+                {item.label}
+              </a>
+            ) : (
+              <Link key={item.label} to={item.to || "/"} className="nav-link">
+                {item.label}
+              </Link>
+            ),
+          )}
         </div>
 
         <button
@@ -62,11 +80,24 @@ const Navbar = () => {
           id={mobileMenuId}
           className="md:hidden bg-background border-b border-border px-4 pb-4 font-body text-sm font-medium space-y-3"
         >
-          {navItems.map((item) => (
-            <Link key={item.label} to={item.to} className="nav-link-mobile" onClick={() => setOpen(false)}>
-              {item.label}
-            </Link>
-          ))}
+          {navItems.map((item) =>
+            item.external ? (
+              <a
+                key={item.label}
+                href={item.href}
+                target="_blank"
+                rel="noreferrer"
+                className="nav-link-mobile"
+                onClick={() => setOpen(false)}
+              >
+                {item.label}
+              </a>
+            ) : (
+              <Link key={item.label} to={item.to || "/"} className="nav-link-mobile" onClick={() => setOpen(false)}>
+                {item.label}
+              </Link>
+            ),
+          )}
         </div>
       )}
     </nav>
