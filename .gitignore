@@ -22,3 +22,10 @@ data/*.db
 # OS / editor
 .DS_Store
 Thumbs.db
+
+# Local agent / CLI artifacts
+.claude/settings.local.json
+.venv-agents/
+test-results/
+.tmp*
+tmp_*.txt
