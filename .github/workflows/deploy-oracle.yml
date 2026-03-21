@@ -1,0 +1,42 @@
+﻿name: Deploy to Oracle VM
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.ORACLE_HOST }}
+          username: ${{ secrets.ORACLE_USER }}
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          port: ${{ secrets.ORACLE_SSH_PORT || 22 }}
+          script_stop: true
+          script: |
+            set -e
+            cd ~/Agente_ImobiliarIA
+
+            git fetch origin
+            git reset --hard origin/main
+
+            python3 -m venv .venv
+            source .venv/bin/activate
+            pip install --upgrade pip
+            pip install -r requirements.txt
+
+            if [ ! -f .env ]; then
+              cp .env.example .env
+            fi
+
+            sudo systemctl daemon-reload
+            sudo systemctl restart agente-imobiliaria.service
+            sudo systemctl status agente-imobiliaria.service --no-pager -n 20

@@ -1,0 +1,141 @@
+{
+  "vendas_paginas_varridas": [
+    "https://www.grankasa.com.br/vendas",
+    "https://www.grankasa.com.br/vendas/2",
+    "https://www.grankasa.com.br/vendas/3",
+    "https://www.grankasa.com.br/vendas/4",
+    "https://www.grankasa.com.br/vendas/5",
+    "https://www.grankasa.com.br/vendas/6",
+    "https://www.grankasa.com.br/vendas/7",
+    "https://www.grankasa.com.br/vendas/8",
+    "https://www.grankasa.com.br/vendas/9"
+  ],
+  "locacao_paginas_varridas": [
+    "https://www.grankasa.com.br/locacao",
+    "https://www.grankasa.com.br/locacao/2",
+    "https://www.grankasa.com.br/locacao/3"
+  ],
+  "total_links_vendas": 101,
+  "total_links_locacao": 26,
+  "total_links_unicos": 127,
+  "total_registros": 127,
+  "registros_com_erro": 0,
+  "missing_fields_count": {
+    "codigo": 0,
+    "tipo": 9,
+    "finalidade": 0,
+    "cidade": 0,
+    "bairro": 0,
+    "preco": 0,
+    "quartos": 0,
+    "suites": 0,
+    "banheiros": 0,
+    "vagas": 0,
+    "area": 127,
+    "imagem": 0
+  },
+  "facets": [
+    {
+      "facet": "Finalidade",
+      "options": [
+        "Imóvel para",
+        "Venda",
+        "Aluguel"
+      ]
+    },
+    {
+      "facet": "Finalidade",
+      "options": [
+        "Finalidade",
+        "COMERCIAL",
+        "MISTO",
+        "RESIDENCIAL"
+      ]
+    },
+    {
+      "facet": "Categoria",
+      "options": [
+        "Categoria",
+        "Apartamentos",
+        "Casa",
+        "Casa comercial",
+        "Casa em Condominio",
+        "Coberturas",
+        "Conjugado",
+        "Loja",
+        "Prédio",
+        "Salas/Conjuntos",
+        "Sitio",
+        "Terreno"
+      ]
+    },
+    {
+      "facet": "Dormitorios",
+      "options": [
+        "Dormitorios",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+      ]
+    },
+    {
+      "facet": "Bairro",
+      "options": [
+        "Bairro",
+        "Andaraí",
+        "Barra Da Tijuca",
+        "Barra Olímpica",
+        "Botafogo",
+        "Cachambi",
+        "Catete",
+        "Centro",
+        "Copacabana",
+        "Cosme Velho",
+        "Engenho de Dentro",
+        "Flamengo",
+        "Freguesia (Jacarepaguá)",
+        "Gávea",
+        "Guaratiba",
+        "Ipanema",
+        "Itacuruça",
+        "Jardim Botânico",
+        "Lagoa",
+        "Laranjeiras",
+        "Leblon",
+        "Lins De Vasconcelos",
+        "Maracanã",
+        "Méier",
+        "Ponta dos Ubas",
+        "Pontal",
+        "Recreio dos Bandeirantes",
+        "Rio Comprido",
+        "Santa Teresa",
+        "São Conrado",
+        "São Cristóvão",
+        "Tijuca",
+        "Todos Os Santos",
+        "Vargem Grande",
+        "Vila Isabel",
+        "Vila Ouro Preto",
+        "Vila São Luís"
+      ]
+    }
+  ],
+  "origem_counts": {
+    "vendas": 101,
+    "locacao": 26
+  },
+  "tipo_counts": {
+    "Sala": 32,
+    "Casa": 23,
+    "Conjugado": 1,
+    "Apartamento": 51,
+    "None": 9,
+    "Loja": 7,
+    "Terreno": 1,
+    "Cobertura": 3
+  }
+}

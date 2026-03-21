@@ -1,4 +1,4 @@
-import { type FormEvent } from "react";
+﻿import { FormEvent, useState } from "react";
 import { Mail, Send } from "lucide-react";
 import { toast } from "sonner";
 
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { cadastrarNewsletter, enviarContato } from "@/lib/imoveis-api";
 
 const contactCardClass = "surface-card-soft p-6 md:p-8";
 const newsletterCardClass = "surface-card-dark h-fit p-6 md:p-7";
@@ -17,20 +18,57 @@ const darkInputClass =
 const buttonClass = "mt-4 h-11 w-full bg-amber-500 font-semibold text-slate-900 hover:bg-amber-400";
 
 const FaleConosco = () => {
-  const handleContactSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const [sendingContact, setSendingContact] = useState(false);
+  const [sendingNewsletter, setSendingNewsletter] = useState(false);
+
+  const handleContactSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    event.currentTarget.reset();
-    toast.success("Mensagem enviada", {
-      description: "Nossa equipe vai retornar seu contato em breve.",
-    });
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+
+    try {
+      setSendingContact(true);
+      await enviarContato({
+        nome: String(formData.get("name") || "").trim(),
+        email: String(formData.get("email") || "").trim(),
+        telefone: String(formData.get("phone") || "").trim(),
+        mensagem: String(formData.get("message") || "").trim(),
+      });
+      form.reset();
+      toast.success("Mensagem enviada", {
+        description: "Nossa equipe vai retornar seu contato em breve.",
+      });
+    } catch {
+      toast.error("Falha ao enviar", {
+        description: "Não foi possível registrar seu contato agora. Tente novamente.",
+      });
+    } finally {
+      setSendingContact(false);
+    }
   };
 
-  const handleNewsletterSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleNewsletterSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    event.currentTarget.reset();
-    toast.success("Cadastro concluído", {
-      description: "Você entrou para a newsletter da GranKasa.",
-    });
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+
+    try {
+      setSendingNewsletter(true);
+      await cadastrarNewsletter({
+        nome: String(formData.get("newsletterName") || "").trim(),
+        email: String(formData.get("newsletterEmail") || "").trim(),
+      });
+      form.reset();
+      toast.success("Cadastro concluído", {
+        description: "Você entrou para a newsletter da GranKasa.",
+      });
+    } catch {
+      toast.error("Falha no cadastro", {
+        description: "Não foi possível salvar seu e-mail agora. Tente novamente.",
+      });
+    } finally {
+      setSendingNewsletter(false);
+    }
   };
 
   return (
@@ -48,14 +86,7 @@ const FaleConosco = () => {
                 <Label htmlFor="contact-name" className="text-slate-700">
                   Nome
                 </Label>
-                <Input
-                  id="contact-name"
-                  name="name"
-                  required
-                  placeholder="Nome"
-                  autoComplete="name"
-                  className={inputClass}
-                />
+                <Input id="contact-name" name="name" required placeholder="Nome" autoComplete="name" className={inputClass} />
               </div>
               <div className={fieldShellClass}>
                 <Label htmlFor="contact-email" className="text-slate-700">
@@ -99,18 +130,16 @@ const FaleConosco = () => {
               </div>
             </div>
 
-            <Button type="submit" className={buttonClass}>
+            <Button type="submit" disabled={sendingContact} className={buttonClass}>
               <Send className="h-4 w-4" />
-              Enviar
+              {sendingContact ? "Enviando..." : "Enviar"}
             </Button>
           </form>
 
           <form onSubmit={handleNewsletterSubmit} className={newsletterCardClass}>
             <div className="mb-6">
               <h3 className="font-display text-2xl">Newsletter</h3>
-              <p className="section-copy-dark mt-2">
-                Receba oportunidades de compra, venda e locação no seu e-mail.
-              </p>
+              <p className="section-copy-dark mt-2">Receba oportunidades de compra, venda e locação no seu e-mail.</p>
             </div>
 
             <div className="space-y-4">
@@ -143,9 +172,9 @@ const FaleConosco = () => {
               </div>
             </div>
 
-            <Button type="submit" className={buttonClass}>
+            <Button type="submit" disabled={sendingNewsletter} className={buttonClass}>
               <Mail className="h-4 w-4" />
-              Cadastrar
+              {sendingNewsletter ? "Cadastrando..." : "Cadastrar"}
             </Button>
           </form>
         </div>

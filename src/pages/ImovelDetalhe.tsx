@@ -1,13 +1,17 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Building2, MapPin } from "lucide-react";
+import { ArrowLeft, Building2, MapPin, MessageCircle, Phone } from "lucide-react";
 
 import AsyncStateCard from "@/components/AsyncStateCard";
 import ImoveisPageHero from "@/components/ImoveisPageHero";
 import PropertyDetailSkeleton from "@/components/PropertyDetailSkeleton";
 import SitePageShell from "@/components/SitePageShell";
 import { Button } from "@/components/ui/button";
-import { ApiError, fetchImovelPorCodigo } from "@/lib/imoveis-api";
+import { ApiError, fetchImovelPorCodigo, formatImovelLocation } from "@/lib/imoveis-api";
+import { buildMapsEmbedUrl, buildMapsSearchUrl } from "@/lib/maps";
+
+const CONTACT_PHONE = "+552125499000";
+const CONTACT_EMAIL = "grankasa@grankasa.com.br";
 
 const formatCurrency = (value: string | null) => {
   if (!value) return "-";
@@ -29,15 +33,31 @@ const ImovelDetalhe = () => {
     queryFn: () => fetchImovelPorCodigo(codigo),
     enabled: Boolean(codigo),
     retry: (failureCount, requestError) => {
-      if (requestError instanceof ApiError && requestError.status === 404) {
-        return false;
-      }
+      if (requestError instanceof ApiError && requestError.status === 404) return false;
       return failureCount < 1;
     },
     retryDelay: (attempt) => Math.min(500 * 2 ** attempt, 2000),
   });
 
   const notFoundError = error instanceof ApiError && error.status === 404;
+  const location = data ? formatImovelLocation(data) : null;
+  const mapFallbackQuery = data
+    ? [data.endereco_formatado, data.logradouro, data.numero, data.bairro, data.cidade, data.uf ?? data.estado]
+        .filter((value): value is string | number => value !== null && value !== undefined && String(value).trim().length > 0)
+        .join(", ")
+    : null;
+  const mapEmbedUrl = data ? buildMapsEmbedUrl(data.mapa_url, mapFallbackQuery) : null;
+  const mapSearchUrl = data ? buildMapsSearchUrl(data.mapa_url, mapFallbackQuery) : null;
+  const mapLinkLabel = mapSearchUrl?.includes("google.") ? "Abrir no Google Maps" : "Abrir mapa de referência";
+
+  const mailToHref = data
+    ? `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`Interesse no imóvel ${data.codigo}`)}`
+    : `mailto:${CONTACT_EMAIL}`;
+  const whatsappHref = data
+    ? `https://api.whatsapp.com/send?phone=${CONTACT_PHONE.replace("+", "")}&text=${encodeURIComponent(
+        `Tenho interesse em visitar o imóvel de código ${data.codigo}`,
+      )}`
+    : `https://api.whatsapp.com/send?phone=${CONTACT_PHONE.replace("+", "")}`;
 
   return (
     <SitePageShell hero={<ImoveisPageHero eyebrow="Imóvel" title="Detalhes do Imóvel" />}>
@@ -46,11 +66,8 @@ const ImovelDetalhe = () => {
           variant="ghost"
           className="mb-6 text-slate-700"
           onClick={() => {
-            if (window.history.length > 1) {
-              navigate(-1);
-            } else {
-              navigate(data ? `/${data.tipo_negocio}` : "/");
-            }
+            if (window.history.length > 1) navigate(-1);
+            else navigate(data ? `/${data.tipo_negocio === "venda" ? "vendas" : "locacao"}` : "/");
           }}
         >
           <ArrowLeft className="h-4 w-4" />
@@ -84,21 +101,17 @@ const ImovelDetalhe = () => {
             />
           ))}
 
-        {!isLoading && !isError && !data && (
-          <AsyncStateCard
-            tone="neutral"
-            title="Não encontramos dados para este imóvel."
-            description="Isso pode acontecer quando o registro ainda não está disponível para a visualização."
-          />
-        )}
-
         {!isLoading && !isError && data && (
           <div className="grid grid-cols-1 gap-7 lg:grid-cols-[1.4fr_1fr]">
             <article className="overflow-hidden rounded-2xl border border-black/10 bg-white shadow-[0_16px_35px_-24px_rgba(15,23,42,0.55)]">
               <div className="bg-[linear-gradient(130deg,hsl(225_70%_28%),hsl(220_70%_20%))] px-6 py-5 text-white">
-                <p className="text-xs uppercase tracking-[0.2em] text-white/75">Cod. {data.codigo}</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-white/75">Cód. {data.codigo}</p>
                 <h2 className="font-display mt-2 text-2xl font-semibold">{data.titulo}</h2>
-                <p className="mt-3 text-sm text-white/80">{data.tipo_negocio === "locacao" ? "Locação" : "Venda"}</p>
+                <p className="mt-3 text-sm text-white/80">
+                  {data.tipo_negocio === "locacao" ? "Locação" : "Venda"}
+                  {data.categoria ? ` - ${data.categoria}` : ""}
+                  {data.finalidade ? ` - ${data.finalidade}` : ""}
+                </p>
               </div>
 
               <div className="space-y-5 p-6">
@@ -114,10 +127,51 @@ const ImovelDetalhe = () => {
                   />
                 </div>
 
-                <p className="flex items-center gap-2 text-slate-700">
-                  <MapPin className="h-4 w-4 text-amber-600" />
-                  {data.bairro}, {data.cidade}
-                </p>
+                {location && (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50/80 px-4 py-3">
+                    <p className="flex items-start gap-2 text-slate-800">
+                      <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+                      <span className="font-medium">{location.headline}</span>
+                    </p>
+                    <p className="mt-1 text-sm text-slate-600">{location.caption}</p>
+                    {mapSearchUrl && (
+                      <a
+                        href={mapSearchUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-2 inline-flex text-sm font-medium text-amber-700 hover:underline"
+                      >
+                        {mapLinkLabel}
+                      </a>
+                    )}
+                  </div>
+                )}
+
+                {mapEmbedUrl && (
+                  <div className="space-y-3">
+                    <div className="overflow-hidden rounded-xl border border-black/10">
+                      <iframe
+                        title={`Mapa do imóvel ${data.codigo}`}
+                        src={mapEmbedUrl}
+                        className="block h-[320px] w-full border-0"
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                        allowFullScreen
+                      />
+                    </div>
+                    {mapSearchUrl && (
+                      <a
+                        href={mapSearchUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-2 text-sm font-semibold text-amber-700 hover:underline"
+                      >
+                        <MapPin className="h-4 w-4" />
+                        {mapLinkLabel}
+                      </a>
+                    )}
+                  </div>
+                )}
 
                 <p className="leading-relaxed text-slate-700">{data.descricao}</p>
 
@@ -159,6 +213,27 @@ const ImovelDetalhe = () => {
                     <strong>IPTU:</strong> {formatCurrency(data.iptu)}
                   </div>
                 </div>
+
+                {(data.video_url || mapSearchUrl || data.fonte_url) && (
+                  <div className="rounded-xl border border-black/10 bg-slate-50 p-4 text-sm text-slate-700 space-y-2">
+                    <h3 className="font-semibold text-slate-900">Mídias e referências</h3>
+                    {data.video_url && (
+                      <a href={data.video_url} target="_blank" rel="noreferrer" className="text-amber-700 hover:underline block">
+                        Vídeo do imóvel
+                      </a>
+                    )}
+                    {mapSearchUrl && (
+                      <a href={mapSearchUrl} target="_blank" rel="noreferrer" className="text-amber-700 hover:underline block">
+                        Localização
+                      </a>
+                    )}
+                    {data.fonte_url && (
+                      <a href={data.fonte_url} target="_blank" rel="noreferrer" className="text-amber-700 hover:underline block">
+                        Fonte original
+                      </a>
+                    )}
+                  </div>
+                )}
               </div>
             </article>
 
@@ -184,9 +259,20 @@ const ImovelDetalhe = () => {
                 </div>
               </div>
 
-              <div className="mt-6 flex items-start gap-2 rounded-xl bg-amber-100/70 px-4 py-3 text-xs text-slate-700">
-                <Building2 className="mt-[1px] h-4 w-4 shrink-0 text-amber-700" />
-                Dados apresentados para demonstração da navegação por código.
+              <div className="mt-6 rounded-xl bg-amber-100/70 px-4 py-3 text-xs text-slate-700 space-y-3">
+                <p className="flex items-start gap-2">
+                  <Building2 className="mt-[1px] h-4 w-4 shrink-0 text-amber-700" />
+                  Agende sua visita com a equipe GranKasa.
+                </p>
+                <a href={`tel:${CONTACT_PHONE}`} className="flex items-center gap-2 text-slate-800 hover:underline">
+                  <Phone className="h-4 w-4" /> (21) 2549-9000
+                </a>
+                <a href={whatsappHref} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-slate-800 hover:underline">
+                  <MessageCircle className="h-4 w-4" /> WhatsApp
+                </a>
+                <a href={mailToHref} className="text-slate-800 hover:underline block">
+                  {CONTACT_EMAIL}
+                </a>
               </div>
             </aside>
           </div>

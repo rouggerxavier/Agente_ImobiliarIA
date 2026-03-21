@@ -1,7 +1,7 @@
 import { Shield, Star, Users } from "lucide-react";
 
 const stats = [
-  { icon: Shield, label: "Anos de mercado", value: "15+" },
+  { icon: Shield, label: "Anos de mercado", value: "20+" },
   { icon: Star, label: "Imóveis vendidos", value: "2.400+" },
   { icon: Users, label: "Clientes satisfeitos", value: "1.800+" },
 ];

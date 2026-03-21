@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
-from app.agent.controller import handle_message
+from app.agent.runtime import handle_message
 from app.agent.llm import LLM_PREWARM, prewarm_llm
 from app.core.logging import setup_logging
 from app.core.config import settings
@@ -148,7 +148,11 @@ async def home():
 @app.get("/health")
 async def health():
     """Health check endpoint - returns 200 OK with status."""
-    return {"status": "ok", "timestamp": datetime.now().isoformat()}
+    return {
+        "status": "ok",
+        "service": "agente_imobiliario_api",
+        "timestamp": datetime.now().isoformat(),
+    }
 
 
 @app.on_event("startup")

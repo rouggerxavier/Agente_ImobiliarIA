@@ -29,17 +29,23 @@ class SanitizingFormatter(logging.Formatter):
         if hasattr(record, "msg") and isinstance(record.msg, str):
             record.msg = self._sanitize_string(record.msg)
 
-        # Sanitize args if present
+        # Sanitize args if present.
+        # NOTE: logging may store a single mapping argument directly as dict
+        # (instead of tuple) for %-formatting. Keep type compatibility to avoid
+        # breaking formatters/handlers that share this LogRecord instance.
         if record.args:
-            sanitized_args = []
-            for arg in record.args:
-                if isinstance(arg, dict):
-                    sanitized_args.append(self._sanitize_dict(arg))
-                elif isinstance(arg, str):
-                    sanitized_args.append(self._sanitize_string(arg))
-                else:
-                    sanitized_args.append(arg)
-            record.args = tuple(sanitized_args)
+            if isinstance(record.args, dict):
+                record.args = self._sanitize_dict(record.args)
+            else:
+                sanitized_args = []
+                for arg in record.args:
+                    if isinstance(arg, dict):
+                        sanitized_args.append(self._sanitize_dict(arg))
+                    elif isinstance(arg, str):
+                        sanitized_args.append(self._sanitize_string(arg))
+                    else:
+                        sanitized_args.append(arg)
+                record.args = tuple(sanitized_args)
 
         return super().format(record)
 

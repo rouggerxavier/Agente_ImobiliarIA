@@ -1,6 +1,6 @@
 ﻿import { Building2, Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 type NavItem = {
   label: string;
@@ -10,9 +10,9 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { label: "Inicio", to: "/#inicio" },
-  { label: "Locacao", to: "/locacao" },
-  { label: "Venda", to: "/venda" },
+  { label: "Início", to: "/#inicio" },
+  { label: "Locação", to: "/locacao" },
+  { label: "Vendas", to: "/vendas" },
   { label: "Sobre", to: "/sobre" },
   { label: "Fale Conosco", to: "/fale-conosco" },
   {
@@ -24,7 +24,15 @@ const navItems: NavItem[] = [
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
+  const location = useLocation();
   const mobileMenuId = "mobile-nav-menu";
+
+  const isActive = (to?: string) => {
+    if (!to) return false;
+    if (to === "/#inicio") return location.pathname === "/" || location.pathname === "/inicio";
+    if (to === "/sobre") return location.pathname === "/sobre" || location.pathname === "/a-empresa";
+    return location.pathname === to;
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -56,7 +64,12 @@ const Navbar = () => {
                 {item.label}
               </a>
             ) : (
-              <Link key={item.label} to={item.to || "/"} className="nav-link">
+              <Link
+                key={item.label}
+                to={item.to || "/"}
+                className={`nav-link ${isActive(item.to) ? "nav-link-active" : ""}`}
+                aria-current={isActive(item.to) ? "page" : undefined}
+              >
                 {item.label}
               </Link>
             ),
@@ -93,7 +106,13 @@ const Navbar = () => {
                 {item.label}
               </a>
             ) : (
-              <Link key={item.label} to={item.to || "/"} className="nav-link-mobile" onClick={() => setOpen(false)}>
+              <Link
+                key={item.label}
+                to={item.to || "/"}
+                className={`nav-link-mobile ${isActive(item.to) ? "nav-link-active" : ""}`}
+                onClick={() => setOpen(false)}
+                aria-current={isActive(item.to) ? "page" : undefined}
+              >
                 {item.label}
               </Link>
             ),

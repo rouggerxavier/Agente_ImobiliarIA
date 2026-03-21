@@ -2,11 +2,20 @@
 
 from __future__ import annotations
 
-from decimal import Decimal
+import json
+import logging
+import re
+import unicodedata
+from datetime import datetime
+from decimal import Decimal, InvalidOperation
+from pathlib import Path
 
 from sqlalchemy.orm import Session
 
 from models.imovel import Imovel
+from services.geo_matching import enrich_imovel_payload
+
+logger = logging.getLogger(__name__)
 
 
 SEED_IMOVEIS = [
@@ -273,12 +282,296 @@ SEED_IMOVEIS = [
 ]
 
 
+KNOWN_NEIGHBORHOODS = tuple(sorted({seed["bairro"] for seed in SEED_IMOVEIS if seed.get("bairro")}))
+
+
+_ENRICHED_FILE = Path(__file__).resolve().parents[1] / "data" / "grankasa_catalog_enriched.json"
+_AUDIT_FILE = Path(__file__).resolve().parents[1] / "data" / "grankasa_catalog_audit.json"
+_CATEGORY_TO_FINALIDADE = {
+    "loja": "COMERCIAL",
+    "sala": "COMERCIAL",
+    "salas/conjuntos": "COMERCIAL",
+    "predio": "COMERCIAL",
+    "casa comercial": "COMERCIAL",
+}
+_ALLOWED_FINALIDADES = {"COMERCIAL", "MISTO", "RESIDENCIAL"}
+_CURRENT_YEAR = datetime.now().year
+
+
+def _normalize_text(value: str | None) -> str:
+    if not value:
+        return ""
+    if "Ã" in value or "Â" in value:
+        try:
+            value = value.encode("latin1").decode("utf-8")
+        except (UnicodeError, AttributeError):
+            pass
+    value = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
+    return re.sub(r"\s+", " ", value).strip()
+
+
+def _to_decimal_currency(value: str | None) -> Decimal | None:
+    if not value:
+        return None
+    cleaned = (
+        value.replace("R$", "")
+        .replace(".", "")
+        .replace(",", ".")
+        .replace(" ", "")
+        .replace("\xa0", "")
+        .strip()
+    )
+    if not cleaned:
+        return None
+    try:
+        return Decimal(cleaned)
+    except InvalidOperation:
+        return None
+
+
+def _to_int(value: str | int | None) -> int | None:
+    if value is None:
+        return None
+    if isinstance(value, int):
+        return value
+    match = re.search(r"-?\d+", str(value))
+    if not match:
+        return None
+    try:
+        return int(match.group(0))
+    except ValueError:
+        return None
+
+
+def _normalize_year(value: int | None) -> int | None:
+    if value is None:
+        return None
+    if 1800 <= value <= _CURRENT_YEAR + 1:
+        return value
+
+    # Some legacy rows may carry an extra trailing zero (e.g., 19880).
+    if value > 9999 and value % 10 == 0:
+        trimmed = value // 10
+        if 1800 <= trimmed <= _CURRENT_YEAR + 1:
+            return trimmed
+    return None
+
+
+def _to_bool(value: str | bool | None, default: bool = False) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return default
+    normalized = _normalize_text(str(value)).lower()
+    if normalized in {"sim", "true", "1", "yes"}:
+        return True
+    if normalized in {"nao", "false", "0", "no"}:
+        return False
+    return default
+
+
+def _guess_bairro(titulo: str) -> str:
+    clean_title = _normalize_text(titulo)
+    if " - " in clean_title:
+        return clean_title.split(" - ", 1)[0].strip() or "Rio de Janeiro"
+    return clean_title or "Rio de Janeiro"
+
+
+def _safe_area(quartos: int | None) -> Decimal:
+    if quartos is None:
+        return Decimal("65.00")
+    if quartos <= 1:
+        return Decimal("48.00")
+    if quartos == 2:
+        return Decimal("75.00")
+    if quartos == 3:
+        return Decimal("105.00")
+    return Decimal("140.00")
+
+
+def _normalize_categoria(tipo: str | None) -> str | None:
+    categoria = _normalize_text(tipo)
+    if not categoria:
+        return None
+    return categoria.title()
+
+
+def _normalize_cidade(value: str | None) -> str:
+    city = _normalize_text(value)
+    if not city:
+        return "Rio de Janeiro"
+    if city.lower() in {"rj", "rio", "rio de janeiro - rj"}:
+        return "Rio de Janeiro"
+    return city
+
+
+def _normalize_finalidade(value: str | None, categoria: str | None) -> str:
+    raw = _normalize_text(value).upper()
+    if raw in _ALLOWED_FINALIDADES:
+        return raw
+
+    categoria_key = _normalize_text(categoria).lower()
+    if categoria_key in _CATEGORY_TO_FINALIDADE:
+        return _CATEGORY_TO_FINALIDADE[categoria_key]
+
+    return "RESIDENCIAL"
+
+
+def _build_seed_from_audit_file() -> list[dict]:
+    source_file = _ENRICHED_FILE if _ENRICHED_FILE.exists() else _AUDIT_FILE
+    if not source_file.exists():
+        return []
+
+    try:
+        raw_items = json.loads(source_file.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return []
+
+    normalized: list[dict] = []
+    seen_codes: set[str] = set()
+
+    for item in raw_items:
+        codigo = _normalize_text(str(item.get("codigo") or ""))
+        if not codigo or codigo in seen_codes:
+            continue
+
+        origem = _normalize_text(item.get("origem_listagem"))
+        tipo_negocio = "locacao" if origem == "locacao" else "venda"
+
+        titulo_raw = _normalize_text(item.get("titulo"))
+        bairro = _normalize_text(item.get("bairro")) or _guess_bairro(titulo_raw)
+        cidade = _normalize_cidade(item.get("cidade"))
+        categoria = _normalize_categoria(item.get("tipo"))
+        finalidade = _normalize_finalidade(item.get("finalidade"), categoria)
+
+        quartos = _to_int(item.get("quartos")) or 0
+        suites = _to_int(item.get("suites")) or 0
+        banheiros = _to_int(item.get("banheiros")) or 0
+        vagas = _to_int(item.get("vagas")) or 0
+        area = _to_int(item.get("area"))
+        salas = _to_int(item.get("salas"))
+        ano_construcao = _normalize_year(_to_int(item.get("ano_construcao")))
+        numero_andares = _to_int(item.get("numero_andares"))
+        elevadores = _to_bool(item.get("elevadores"), default=False)
+        dependencias = _to_bool(item.get("dependencias"), default=False)
+
+        preco = _to_decimal_currency(item.get("preco"))
+        valor_aluguel = preco if tipo_negocio == "locacao" else None
+        valor_compra = preco if tipo_negocio == "venda" else None
+        condominio = _to_decimal_currency(item.get("condominio")) or Decimal("0.00")
+        iptu = _to_decimal_currency(item.get("iptu")) or Decimal("0.00")
+
+        foto_url = _normalize_text(item.get("imagem"))
+        if not foto_url or "logo.png" in foto_url.lower():
+            foto_url = "/imoveis-img/fallback.jpg"
+
+        tipo_label = categoria or "Imovel"
+        titulo = f"{tipo_label} em {bairro}"
+        descricao_longa = _normalize_text(item.get("descricao_longa"))
+        descricao = descricao_longa or (
+            f"{tipo_label} localizado em {bairro}, {cidade}. "
+            "Dados importados de auditoria para aproximar o catalogo ao site de referencia."
+        )
+
+        normalized_item = {
+            "codigo": codigo,
+            "tipo_negocio": tipo_negocio,
+            "titulo": titulo[:180],
+            "descricao": descricao[:3000],
+            "foto_url": foto_url,
+            "categoria": categoria,
+            "finalidade": finalidade,
+            "fonte_url": _normalize_text(item.get("url_detalhada")) or None,
+            "video_url": _normalize_text(item.get("video_url")) or None,
+            "mapa_url": _normalize_text(item.get("mapa_url")) or None,
+            "valor_aluguel": valor_aluguel,
+            "valor_compra": valor_compra,
+            "condominio": condominio,
+            "iptu": iptu,
+            "area_m2": Decimal(str(area)) if area and area > 0 else _safe_area(quartos),
+            "numero_salas": salas,
+            "numero_vagas": vagas,
+            "numero_quartos": quartos,
+            "numero_banheiros": banheiros,
+            "numero_suites": suites,
+            "dependencias": dependencias,
+            "ano_construcao": ano_construcao,
+            "numero_andares": numero_andares,
+            "tem_elevadores": elevadores,
+            "bairro": bairro[:120] or "Rio de Janeiro",
+            "cidade": cidade[:120] or "Rio de Janeiro",
+        }
+        normalized.append(
+            enrich_imovel_payload(
+                normalized_item,
+                source="legacy_audit",
+                raw_row=item,
+                known_neighborhoods=KNOWN_NEIGHBORHOODS,
+            )
+        )
+        seen_codes.add(codigo)
+
+    return normalized
+
+
+def _ensure_minimum_catalog_balance(payload: list[dict]) -> list[dict]:
+    """Guarantee at least one listing for each business type."""
+    has_locacao = any(item.get("tipo_negocio") == "locacao" for item in payload)
+    has_venda = any(item.get("tipo_negocio") == "venda" for item in payload)
+
+    if has_locacao and has_venda:
+        return payload
+
+    complement = []
+    for seed in SEED_IMOVEIS:
+        tipo = seed.get("tipo_negocio")
+        if tipo == "locacao" and has_locacao:
+            continue
+        if tipo == "venda" and has_venda:
+            continue
+        complement.append(
+            enrich_imovel_payload(
+                seed,
+                source="curated_default",
+                raw_row=seed,
+                known_neighborhoods=KNOWN_NEIGHBORHOODS,
+            )
+        )
+        if tipo == "locacao":
+            has_locacao = True
+        if tipo == "venda":
+            has_venda = True
+        if has_locacao and has_venda:
+            break
+
+    return payload + complement
+
+
+def _effective_seed_payload() -> tuple[list[dict], str]:
+    """Use audited catalog when available, fallback to curated default seed."""
+    from_audit = _build_seed_from_audit_file()
+    if from_audit:
+        return _ensure_minimum_catalog_balance(from_audit), "legacy_audit"
+
+    curated = [
+        enrich_imovel_payload(
+            payload,
+            source="curated_default",
+            raw_row=payload,
+            known_neighborhoods=KNOWN_NEIGHBORHOODS,
+        )
+        for payload in SEED_IMOVEIS
+    ]
+    return _ensure_minimum_catalog_balance(curated), "curated_default"
+
+
 def seed_imoveis(db: Session) -> None:
     """Populate default properties and keep seeded records updated by code."""
+    seed_payload, seed_source = _effective_seed_payload()
     existing_by_code = {imovel.codigo: imovel for imovel in db.query(Imovel).all()}
     has_changes = False
 
-    for payload in SEED_IMOVEIS:
+    for payload in seed_payload:
         existing = existing_by_code.get(payload["codigo"])
 
         if existing is None:
@@ -293,3 +586,11 @@ def seed_imoveis(db: Session) -> None:
 
     if has_changes:
         db.commit()
+
+    logger.info(
+        "seed_imoveis source=%s records=%d db_records=%d changes=%s",
+        seed_source,
+        len(seed_payload),
+        len(existing_by_code),
+        has_changes,
+    )

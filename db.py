@@ -8,14 +8,16 @@ postgresql+psycopg://user:password@host:5432/database
 from __future__ import annotations
 
 import os
+import logging
 from pathlib import Path
 from collections.abc import Generator
 
-from sqlalchemy import create_engine, inspect
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./data/imoveis.db")
+logger = logging.getLogger(__name__)
 
 
 def _ensure_sqlite_directory(db_url: str) -> None:
@@ -39,7 +41,7 @@ Base = declarative_base()
 
 
 def _sqlite_schema_needs_reset() -> bool:
-    """Detect legacy SQLite schema for `imoveis` and trigger rebuild."""
+    """Detect very old SQLite schema and trigger a one-time rebuild."""
     if not DATABASE_URL.startswith("sqlite"):
         return False
 
@@ -48,8 +50,45 @@ def _sqlite_schema_needs_reset() -> bool:
         return False
 
     columns = {column["name"] for column in inspector.get_columns("imoveis")}
-    required_columns = {"codigo", "tipo_negocio", "titulo", "condominio", "tem_elevadores", "foto_url"}
-    return not required_columns.issubset(columns)
+    required_core = {
+        "codigo",
+        "tipo_negocio",
+        "titulo",
+        "descricao",
+        "foto_url",
+        "area_m2",
+        "bairro",
+        "cidade",
+    }
+    return not required_core.issubset(columns)
+
+
+def _ensure_missing_columns() -> list[str]:
+    """Add optional columns to legacy `imoveis` tables without data loss."""
+    from models.imovel import Imovel
+
+    inspector = inspect(engine)
+    if "imoveis" not in inspector.get_table_names():
+        return []
+
+    existing_columns = {column["name"] for column in inspector.get_columns("imoveis")}
+    missing_columns: list[str] = []
+    table = Imovel.__table__
+
+    with engine.begin() as connection:
+        for column in table.columns:
+            if column.name in existing_columns:
+                continue
+            statement = text(
+                f"ALTER TABLE {engine.dialect.identifier_preparer.quote(table.name)} "
+                f"ADD COLUMN {engine.dialect.identifier_preparer.quote(column.name)} "
+                f"{column.type.compile(dialect=engine.dialect)}"
+            )
+            connection.execute(statement)
+            missing_columns.append(column.name)
+            logger.info("Added missing column to imoveis table: %s", column.name)
+
+    return missing_columns
 
 
 def init_db() -> None:
@@ -58,13 +97,22 @@ def init_db() -> None:
     from models import imovel as _imovel  # noqa: F401
     from seeds.imoveis_seed import seed_imoveis
 
-    if _sqlite_schema_needs_reset():
+    reset_triggered = _sqlite_schema_needs_reset()
+    if reset_triggered:
+        logger.warning("SQLite legacy schema detected. Rebuilding `imoveis` table with current model.")
         Base.metadata.drop_all(bind=engine)
 
     Base.metadata.create_all(bind=engine)
+    missing_columns = _ensure_missing_columns()
 
     with SessionLocal() as db:
         seed_imoveis(db)
+    logger.info(
+        "Database initialized db_url=%s reset_triggered=%s missing_columns=%s",
+        DATABASE_URL,
+        reset_triggered,
+        missing_columns,
+    )
 
 
 def get_db() -> Generator[Session, None, None]:

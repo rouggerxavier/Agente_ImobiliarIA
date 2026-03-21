@@ -1,4 +1,4 @@
-import { MessageCircle, X, Send, Loader2 } from "lucide-react";
+﻿import { MessageCircle, X, Send, Loader2 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
@@ -14,7 +14,7 @@ interface Message {
 const ChatWidget = () => {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { role: "agent", text: "Ola! Sou o assistente virtual da GranKasa. Como posso ajudar voce hoje?" },
+    { role: "agent", text: "Olá! Sou o assistente virtual da GranKasa. Como posso ajudar você hoje?" },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -59,7 +59,7 @@ const ChatWidget = () => {
       const detail = error instanceof Error ? ` (${error.message})` : "";
       setMessages((prev) => [
         ...prev,
-        { role: "agent", text: `Desculpe, nao consegui me conectar ao servidor. Tente novamente${detail}.` },
+        { role: "agent", text: `Desculpe, não consegui me conectar ao servidor. Tente novamente${detail}.` },
       ]);
     } finally {
       setLoading(false);
@@ -83,7 +83,7 @@ const ChatWidget = () => {
           <div className="bg-primary px-5 py-4 flex items-center justify-between">
             <div>
               <p className="font-display text-sm font-semibold text-primary-foreground">Assistente GranKasa</p>
-              <p className="font-body text-xs text-primary-foreground/60">Powered by IA � Online</p>
+              <p className="font-body text-xs text-primary-foreground/60">Powered by IA • Online</p>
             </div>
             <button
               type="button"
@@ -161,3 +161,4 @@ const ChatWidget = () => {
 };
 
 export default ChatWidget;
+

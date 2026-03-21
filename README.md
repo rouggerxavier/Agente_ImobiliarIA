@@ -11,7 +11,7 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 copy .env.example .env
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn main:app --host 0.0.0.0 --port 8010 --reload
 ```
 
 ### Frontend (Vite + React) opcional
@@ -27,8 +27,12 @@ docker compose up --build -d
 ```
 
 App disponivel em:
-- `http://localhost:8000`
+- `http://localhost:8010`
 - Se `WEBHOOK_API_KEY` estiver preenchida no backend, preencha tambem `VITE_BACKEND_API_KEY` no `.env` antes do build do Docker.
+
+Nota local:
+- Evite usar `8000` se voce ja tiver outro projeto rodando nessa porta.
+- O `.env.example` deste repositorio usa `8010` para reduzir conflitos.
 
 ### Testes
 ```bash
@@ -1126,3 +1130,68 @@ Arquivos para ler primeiro:
 9. `render.yaml`
 
 Este README foi escrito para ser suficiente mesmo sem acesso ao codigo, mas os arquivos acima sao a fonte primaria para qualquer alteracao arquitetural.
+
+---
+
+## 17. Superetapa Multiagente (incremental)
+
+Foi adicionada uma camada opcional de orquestracao multiagente mantendo compatibilidade com o fluxo atual.
+
+- Gateway: `agent/runtime.py`
+- Orquestrador: `agent/multiagent/orchestrator.py`
+- Subagents:
+  - `legacy_triage_subagent` (delegacao para `agent.controller`)
+  - `catalog_subagent` (catalogo de imoveis)
+  - `knowledge_subagent` (base de conhecimento)
+- Guardrails: `agent/multiagent/guardrails.py`
+- Observabilidade: `agent/multiagent/observability.py` (`data/multiagent_trace.jsonl`)
+- OpenAI Agents SDK (opcional): `agent/multiagent/openai_sdk_router.py`
+
+Feature flags novas:
+
+- `MULTIAGENT_ENABLED=false`
+- `MULTIAGENT_OPENAI_SDK_ROUTER_ENABLED=false`
+- `MULTIAGENT_OPENAI_MODEL=gpt-4.1-mini`
+- `MULTIAGENT_TRACE_ENABLED=true`
+- `MULTIAGENT_TRACE_PATH=data/multiagent_trace.jsonl`
+- `MULTIAGENT_ALLOW_SENSITIVE_ACTIONS=false`
+
+---
+
+## 18. Estabilização de Catálogo (Home / Locação / Vendas)
+
+Diagnóstico principal identificado em ambiente local:
+
+- Frontend chamando `VITE_BACKEND_URL` com backend incorreto em `localhost:8000`.
+- Resultado observado: erro de CORS e resposta inválida (HTML) para endpoints `/imoveis/*`.
+- Efeito: telas de Home, Locação e Vendas sem dados, com erro persistente.
+
+Correções aplicadas:
+
+1. Cliente API robusto (`src/lib/imoveis-api.ts`)
+- Auto-resolução de backend com modo conservador por padrão e descoberta opcional por probe em `/health`.
+- Timeout por requisição (`VITE_API_TIMEOUT_MS`).
+- Validação de `content-type` (JSON obrigatório).
+- Diagnóstico de falha por código (`network`, `timeout`, `contract`, `parse`, `http`).
+- Telemetria local de catálogo em `window.__catalogTrace`.
+
+2. Fallback seguro de catálogo (`src/lib/catalog-fallback.ts`)
+- Base gerada a partir de `data/grankasa_catalog_enriched.json`.
+- Ativado quando API principal falha por rede/timeout/contrato.
+- Controlado por `VITE_ENABLE_CATALOG_FALLBACK`.
+
+3. UX das páginas de listagem
+- Filtros com labels claros, botão de limpar, chips de filtros ativos.
+- Estado de atualização durante refetch.
+- Mensagens de erro e vazio com CTA útil.
+- Indicador explícito de modo de contingência.
+
+4. Observabilidade backend
+- Logs estruturados de endpoints de catálogo em `routes/imoveis.py` com tempo e contagem.
+- `/health` retorna `service: agente_imobiliario_api` para validação de alvo correto.
+
+Novas variáveis frontend:
+
+- `VITE_API_TIMEOUT_MS=12000`
+- `VITE_ENABLE_CATALOG_FALLBACK=true`
+- `VITE_ENABLE_BACKEND_DISCOVERY=false`

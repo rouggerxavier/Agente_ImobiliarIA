@@ -1,11 +1,11 @@
-import ImoveisListPage from "@/components/ImoveisListPage";
+﻿import ImoveisListPage from "@/components/ImoveisListPage";
 
 const Locacao = () => {
   return (
     <ImoveisListPage
       tipo="locacao"
       titulo="Locação"
-      descricao="Confira opções de locação com o mesmo fluxo do site anterior: lista completa e detalhes por código."
+      descricao="Catálogo completo para locação com filtros por bairro, categoria e dormitórios."
     />
   );
 };

@@ -181,6 +181,10 @@
     @apply text-muted-foreground transition-colors hover:text-foreground;
   }
 
+  .nav-link-active {
+    @apply text-foreground;
+  }
+
   .nav-link-mobile {
     @apply block text-muted-foreground transition-colors hover:text-foreground;
   }

@@ -1,0 +1,11 @@
+{
+  "source_file": "C:\\vscode\\Agente_ImobiliarIA\\data\\grankasa_catalog_audit.json",
+  "output_file": "C:\\vscode\\Agente_ImobiliarIA\\data\\grankasa_catalog_enriched.json",
+  "total_input": 127,
+  "total_output": 127,
+  "errors": {
+    "request_error:ReadTimeout": 8
+  },
+  "elapsed_seconds": 463.03,
+  "generated_at_epoch": 1774030465.5272176
+}

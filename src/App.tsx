@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Sobre from "./pages/Sobre";
 import FaleConosco from "./pages/FaleConosco";
@@ -23,10 +23,13 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/inicio" element={<Index />} />
           <Route path="/sobre" element={<Sobre />} />
+          <Route path="/a-empresa" element={<Navigate to="/sobre" replace />} />
           <Route path="/fale-conosco" element={<FaleConosco />} />
           <Route path="/locacao" element={<Locacao />} />
           <Route path="/venda" element={<Venda />} />
+          <Route path="/vendas" element={<Venda />} />
           <Route path="/imovel/:codigo" element={<ImovelDetalhe />} />
           <Route path="/busca" element={<Busca />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

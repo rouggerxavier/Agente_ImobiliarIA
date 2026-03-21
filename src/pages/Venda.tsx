@@ -1,11 +1,11 @@
-import ImoveisListPage from "@/components/ImoveisListPage";
+﻿import ImoveisListPage from "@/components/ImoveisListPage";
 
 const Venda = () => {
   return (
     <ImoveisListPage
       tipo="venda"
-      titulo="Venda"
-      descricao="Veja os imóveis à venda em layout inspirado no site anterior, com navegação para a página de detalhes."
+      titulo="Vendas"
+      descricao="Catálogo de imóveis para venda com dados auditados e navegação por código."
     />
   );
 };

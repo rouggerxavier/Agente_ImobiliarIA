@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Bath, BedDouble, Building2, Car, Layers3, MapPin } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Imovel } from "@/lib/imoveis-api";
+import { formatImovelLocation, Imovel } from "@/lib/imoveis-api";
 
 interface ImovelListingCardProps {
   imovel: Imovel;
@@ -22,8 +22,14 @@ const formatCurrency = (value: string | null) => {
 };
 
 const formatArea = (value: string) => `${Number(value).toLocaleString("pt-BR")} m²`;
+const formatCountLabel = (value: number | null, singular: string, plural: string) => {
+  const count = value ?? 0;
+  return `${count} ${count === 1 ? singular : plural}`;
+};
 
 const ImovelListingCard = ({ imovel, detailHref, priceValue, priceSuffix }: ImovelListingCardProps) => {
+  const location = formatImovelLocation(imovel);
+
   return (
     <article className="overflow-hidden rounded-2xl border border-black/10 bg-white shadow-[0_16px_35px_-24px_rgba(15,23,42,0.55)] transition-transform duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_45px_-24px_rgba(15,23,42,0.62)]">
       <div className="relative h-52 overflow-hidden">
@@ -40,7 +46,7 @@ const ImovelListingCard = ({ imovel, detailHref, priceValue, priceSuffix }: Imov
       </div>
 
       <div className="bg-[linear-gradient(130deg,hsl(225_70%_28%),hsl(220_70%_20%))] px-5 py-4 text-white">
-        <p className="text-xs uppercase tracking-[0.2em] text-white/75">Cod. {imovel.codigo}</p>
+        <p className="text-xs uppercase tracking-[0.2em] text-white/75">Cód. {imovel.codigo}</p>
         <h2 className="font-display mt-2 text-lg font-semibold">{imovel.titulo}</h2>
         <p className="mt-2 text-2xl font-bold">
           {formatCurrency(priceValue)}
@@ -51,8 +57,9 @@ const ImovelListingCard = ({ imovel, detailHref, priceValue, priceSuffix }: Imov
       <div className="p-5">
         <p className="flex items-center gap-2 text-sm text-slate-600">
           <MapPin className="h-4 w-4 text-amber-600" />
-          {imovel.bairro}, {imovel.cidade}
+          <span>{location.headline}</span>
         </p>
+        <p className="mt-1 text-xs leading-relaxed text-slate-500">{location.caption}</p>
 
         <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-slate-700">
           <span className="flex items-center gap-2">
@@ -61,19 +68,19 @@ const ImovelListingCard = ({ imovel, detailHref, priceValue, priceSuffix }: Imov
           </span>
           <span className="flex items-center gap-2">
             <BedDouble className="h-4 w-4 text-amber-600" />
-            {imovel.numero_quartos ?? 0} quartos
+            {formatCountLabel(imovel.numero_quartos, "quarto", "quartos")}
           </span>
           <span className="flex items-center gap-2">
             <Bath className="h-4 w-4 text-amber-600" />
-            {imovel.numero_banheiros ?? 0} banheiros
+            {formatCountLabel(imovel.numero_banheiros, "banheiro", "banheiros")}
           </span>
           <span className="flex items-center gap-2">
             <Car className="h-4 w-4 text-amber-600" />
-            {imovel.numero_vagas ?? 0} vagas
+            {formatCountLabel(imovel.numero_vagas, "vaga", "vagas")}
           </span>
           <span className="flex items-center gap-2">
             <Layers3 className="h-4 w-4 text-amber-600" />
-            {imovel.numero_salas ?? 0} salas
+            {formatCountLabel(imovel.numero_salas, "sala", "salas")}
           </span>
         </div>
 

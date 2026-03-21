@@ -861,8 +861,19 @@ def handle_message(session_id: str, message: str, name: str | None = None, corre
                 state.history.append({"role": "assistant", "text": qa_answer})
                 return {"reply": qa_answer, "state": state.to_public_dict()}
 
-        # 0. Pede nome primeiro — antes de qualquer campo do funil
-        if not _is_valid_name(state.lead_profile.get("name")) and "lead_name" not in state.asked_questions:
+        # 0. Pede nome primeiro apenas quando o usuário ainda não trouxe
+        # sinais claros de busca imobiliária (evita bloquear perguntas críticas).
+        has_any_criteria = any(v is not None for v in state.criteria.__dict__.values())
+        has_meaningful_updates = any(
+            _extract_update_value(payload) is not None for payload in extracted_updates.values()
+        )
+        should_name_gate_first = not state.intent and not has_any_criteria and not has_meaningful_updates
+
+        if (
+            should_name_gate_first
+            and not _is_valid_name(state.lead_profile.get("name"))
+            and "lead_name" not in state.asked_questions
+        ):
             name_q_base = choose_question("lead_name", state) or "Antes de começar, como posso te chamar?"
             name_q = f"{_TRIAGE_PRE_NOTICE}{name_q_base}"
             state.last_question_key = "lead_name"

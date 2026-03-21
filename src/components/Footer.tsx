@@ -1,11 +1,11 @@
-import { Building2, Mail, MapPin, Phone } from "lucide-react";
+﻿import { Building2, Mail, MapPin, Phone } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const footerLinks = [
   { label: "Início", to: "/#inicio" },
   { label: "Sobre", to: "/sobre" },
   { label: "Locação", to: "/locacao" },
-  { label: "Venda", to: "/venda" },
+  { label: "Vendas", to: "/vendas" },
   { label: "Fale Conosco", to: "/fale-conosco" },
 ];
 
@@ -18,6 +18,12 @@ const footerContacts = [
     href: "https://www.google.com/maps/search/?api=1&query=Av.%20Nossa%20Sra.%20de%20Copacabana,%20749%20-%20Sl%20501%20-%20Copacabana,%20Rio%20de%20Janeiro%20-%20RJ,%2022050-002,%20Brasil",
     external: true,
   },
+];
+
+const socialLinks = [
+  { label: "Facebook", href: "https://www.facebook.com/grankasa" },
+  { label: "YouTube", href: "https://www.youtube.com/user/grankasa" },
+  { label: "Painel do Cliente", href: "https://docsuite.com.br/login/granka" },
 ];
 
 const Footer = () => {
@@ -33,8 +39,8 @@ const Footer = () => {
               </span>
             </div>
             <p className="footer-copy">
-              Transformando sonhos em endereços desde 2010. Atendimento personalizado e os melhores imóveis do
-              mercado.
+              Atuando no mercado imobiliário do Rio de Janeiro, com foco em locação, vendas e atendimento
+              personalizado.
             </p>
           </div>
 
@@ -65,11 +71,18 @@ const Footer = () => {
                 </Link>
               ))}
             </div>
+            <div className="pt-4 space-y-2">
+              {socialLinks.map((link) => (
+                <a key={link.label} href={link.href} target="_blank" rel="noreferrer" className="footer-link">
+                  {link.label}
+                </a>
+              ))}
+            </div>
           </div>
         </div>
 
         <div className="mt-10 border-t border-primary-foreground/10 pt-6 text-center font-body text-xs text-primary-foreground/50">
-          © {new Date().getFullYear()} GranKasa Imóveis. Todos os direitos reservados.
+          2017 © - Todos os direitos reservados a GranKasa. Produzido por SV Consultoria e Sistemas.
         </div>
       </div>
     </footer>
