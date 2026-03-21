@@ -391,7 +391,7 @@ def obter_imovel_por_codigo(codigo: str, db: Session = Depends(get_db)) -> Imove
     return imovel
 
 
-@router.get("/{imovel_id}", response_model=ImovelResponse)
+@router.get("/{imovel_id:int}", response_model=ImovelResponse)
 def obter_imovel_por_id(imovel_id: int, db: Session = Depends(get_db)) -> Imovel:
     started_at = time.perf_counter()
     imovel = db.query(Imovel).filter(Imovel.id == imovel_id).first()
