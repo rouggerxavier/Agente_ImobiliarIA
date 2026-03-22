@@ -73,8 +73,12 @@ const ChatWidget = () => {
     }
   };
 
+  const containerClassName = open
+    ? "fixed z-50 bottom-4 left-4 right-4 sm:bottom-6 sm:right-6 sm:left-auto"
+    : "fixed z-50 bottom-4 right-4 sm:bottom-6 sm:right-6";
+
   return (
-    <div className="fixed z-50 bottom-4 left-4 right-4 sm:bottom-6 sm:right-6 sm:left-auto">
+    <div className={containerClassName}>
       {open && (
         <div
           id={CHAT_PANEL_ID}

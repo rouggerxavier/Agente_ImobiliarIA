@@ -134,4 +134,18 @@ describe("ImoveisListPage", () => {
       expect(mockFetchImoveisPorTipo).toHaveBeenCalled();
     });
   });
+
+  it("ignora parametro de dormitorios invalido na URL", async () => {
+    mockFetchImoveisPorTipo.mockResolvedValue([fallbackItem]);
+
+    renderPage("/vendas?dormitorios=abc");
+
+    await waitFor(() => {
+      expect(mockFetchImoveisPorTipo).toHaveBeenCalled();
+    });
+
+    const firstCall = mockFetchImoveisPorTipo.mock.calls[0];
+    expect(firstCall[1]).toMatchObject({ dormitorios: undefined });
+    expect(screen.queryByText(/Dormitórios:/)).not.toBeInTheDocument();
+  });
 });

@@ -122,7 +122,7 @@ const ImovelDetalhe = () => {
                     className="h-[280px] w-full object-cover"
                     loading="lazy"
                     onError={(event) => {
-                      (event.currentTarget as HTMLImageElement).src = "/imoveis-img/fallback.jpg";
+                      (event.currentTarget as HTMLImageElement).src = "/catalogo-fallback.jpg";
                     }}
                   />
                 </div>

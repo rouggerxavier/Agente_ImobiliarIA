@@ -25,13 +25,20 @@ const asPage = (value: string | null) => {
   return Math.floor(parsed);
 };
 
+const asDormitorios = (value: string | null) => {
+  if (!value) return "";
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 1) return "";
+  return String(Math.floor(parsed));
+};
+
 const ImoveisListPage = ({ tipo, titulo, descricao }: ImoveisListPageProps) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   const categoriaParam = searchParams.get("categoria") ?? "";
   const bairroParam = searchParams.get("bairro") ?? "";
-  const dormitoriosParam = searchParams.get("dormitorios") ?? "";
+  const dormitoriosParam = asDormitorios(searchParams.get("dormitorios"));
   const page = asPage(searchParams.get("page"));
 
   const [inputCategoria, setInputCategoria] = useState(categoriaParam);
@@ -130,7 +137,7 @@ const ImoveisListPage = ({ tipo, titulo, descricao }: ImoveisListPageProps) => {
                 <select
                   value={inputCategoria}
                   onChange={(event) => setInputCategoria(event.target.value)}
-                  className="w-full rounded-xl border border-white/20 bg-slate-900/35 px-3 py-2 text-sm normal-case tracking-normal text-white"
+                  className="w-full rounded-xl border border-white/20 bg-slate-900/35 px-3 py-2 text-sm normal-case tracking-normal text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/80"
                 >
                   <option value="">Todas</option>
                   {filtros?.categorias?.map((categoria) => (
@@ -146,7 +153,7 @@ const ImoveisListPage = ({ tipo, titulo, descricao }: ImoveisListPageProps) => {
                 <select
                   value={inputBairro}
                   onChange={(event) => setInputBairro(event.target.value)}
-                  className="w-full rounded-xl border border-white/20 bg-slate-900/35 px-3 py-2 text-sm normal-case tracking-normal text-white"
+                  className="w-full rounded-xl border border-white/20 bg-slate-900/35 px-3 py-2 text-sm normal-case tracking-normal text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/80"
                 >
                   <option value="">Todos</option>
                   {filtros?.bairros?.map((bairro) => (
@@ -162,7 +169,7 @@ const ImoveisListPage = ({ tipo, titulo, descricao }: ImoveisListPageProps) => {
                 <select
                   value={inputDormitorios}
                   onChange={(event) => setInputDormitorios(event.target.value)}
-                  className="w-full rounded-xl border border-white/20 bg-slate-900/35 px-3 py-2 text-sm normal-case tracking-normal text-white"
+                  className="w-full rounded-xl border border-white/20 bg-slate-900/35 px-3 py-2 text-sm normal-case tracking-normal text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/80"
                 >
                   <option value="">Qualquer</option>
                   {[1, 2, 3, 4, 5, 6].map((n) => (
@@ -188,7 +195,7 @@ const ImoveisListPage = ({ tipo, titulo, descricao }: ImoveisListPageProps) => {
         </ImoveisPageHero>
       }
     >
-      <section className="mx-auto max-w-6xl px-4 py-12 md:py-14">
+      <section className="mx-auto max-w-6xl px-4 pt-12 pb-24 md:pt-14 md:pb-14">
         {usingFallbackData && (
           <div className="mb-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />

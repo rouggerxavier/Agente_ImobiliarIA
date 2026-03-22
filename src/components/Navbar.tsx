@@ -31,6 +31,7 @@ const Navbar = () => {
     if (!to) return false;
     if (to === "/#inicio") return location.pathname === "/" || location.pathname === "/inicio";
     if (to === "/sobre") return location.pathname === "/sobre" || location.pathname === "/a-empresa";
+    if (to === "/vendas") return location.pathname === "/vendas" || location.pathname === "/venda";
     return location.pathname === to;
   };
 

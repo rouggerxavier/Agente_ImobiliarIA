@@ -186,7 +186,7 @@
   }
 
   .nav-link-mobile {
-    @apply block text-muted-foreground transition-colors hover:text-foreground;
+    @apply flex min-h-11 items-center py-2 text-muted-foreground transition-colors hover:text-foreground;
   }
 
   .hero-slide-button {

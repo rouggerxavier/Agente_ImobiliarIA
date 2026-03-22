@@ -1,6 +1,12 @@
 ﻿import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 
-import { fetchImoveisPorTipo, fetchImoveisFiltros, formatImovelLocation, resetBackendResolutionForTests } from "@/lib/imoveis-api";
+import {
+  fetchImoveisPorTipo,
+  fetchImoveisFiltros,
+  fetchImovelPorCodigo,
+  formatImovelLocation,
+  resetBackendResolutionForTests,
+} from "@/lib/imoveis-api";
 
 const fakeImovel = {
   id: 1,
@@ -97,6 +103,30 @@ describe("imoveis-api", () => {
     expect(response[0].data_source).toBe("api");
   });
 
+  it("normaliza variacoes legadas de acentuacao e capitalizacao", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/health")) return jsonResponse({ status: "ok", service: "agente_imobiliario_api" });
+      if (url.includes("/imoveis/locacao")) {
+        return jsonResponse([
+          {
+            ...fakeImovel,
+            titulo: "Imovel em Freguesia (jacarepagua)",
+            bairro: "Freguesia (jacarepagua)",
+          },
+        ]);
+      }
+      return jsonResponse([]);
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await fetchImoveisPorTipo("locacao", { limit: 1 });
+
+    expect(response[0].titulo).toBe("Imóvel em Freguesia (Jacarepaguá)");
+    expect(response[0].bairro).toBe("Freguesia (Jacarepaguá)");
+  });
+
   it("retorna filtros de fallback quando a API falha", async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
@@ -113,6 +143,22 @@ describe("imoveis-api", () => {
     expect(filtros.bairros.length).toBeGreaterThan(0);
     expect(Array.isArray(filtros.categorias)).toBe(true);
     expect(Array.isArray(filtros.finalidades)).toBe(true);
+  });
+
+  it("mantem erro estrutural quando detalhe nao existe no fallback local", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/imoveis/codigo/")) {
+        return jsonResponse({ detail: "Serviço indisponível" }, 503);
+      }
+      return jsonResponse({ status: "ok", service: "agente_imobiliario_api" });
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(fetchImovelPorCodigo("codigo-inexistente-no-fallback")).rejects.toMatchObject({
+      status: 503,
+    });
   });
 
   it("monta uma localização completa quando o backend envia endereço detalhado", () => {

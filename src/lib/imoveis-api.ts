@@ -315,8 +315,9 @@ function normalizeLegacyDisplayText(value: string): string {
     [/\bBarra Olimpica\b/g, "Barra Olímpica"],
     [/\bCentro Da Cidade\b/g, "Centro da Cidade"],
     [/\bEngenho De Dentro\b/g, "Engenho de Dentro"],
-    [/Freguesia \(Jacarepagua\)/g, "Freguesia (Jacarepaguá)"],
+    [/Freguesia \(Jacarepagua\)/gi, "Freguesia (Jacarepaguá)"],
     [/\bGavea\b/g, "Gávea"],
+    [/\bImovel\b/gi, "Imóvel"],
     [/\bItacuruca\b/g, "Itacuruçá"],
     [/\bJardim Botanico\b/g, "Jardim Botânico"],
     [/\bLins De Vasconcelos\b/g, "Lins de Vasconcelos"],
@@ -325,6 +326,7 @@ function normalizeLegacyDisplayText(value: string): string {
     [/\bPonta Dos Ubas\b/g, "Ponta dos Ubas"],
     [/\bRecreio Dos Bandeirantes\b/g, "Recreio dos Bandeirantes"],
     [/\bRio De Janeiro\b/g, "Rio de Janeiro"],
+    [/\bRepublica\b/g, "República"],
     [/\bSao\b/g, "São"],
     [/\bCristovao\b/g, "Cristóvão"],
     [/\bJoao\b/g, "João"],
@@ -657,7 +659,8 @@ export async function fetchImovelPorCodigo(codigo: string): Promise<Imovel> {
 
     const found = fallbackItems().find((item) => item.codigo === codigo);
     if (!found) {
-      throw new ApiError(404, "Imóvel não encontrado.", "http");
+      if (error instanceof ApiError) throw error;
+      throw new ApiError(503, "Não foi possível consultar o detalhe do imóvel no momento.", "network");
     }
 
     logCatalogEvent("catalog_fallback_used", {

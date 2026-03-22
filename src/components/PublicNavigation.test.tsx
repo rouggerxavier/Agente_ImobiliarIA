@@ -17,6 +17,17 @@ describe("Public navigation labels and routes", () => {
     expect(screen.getByRole("link", { name: "Locação" })).toHaveAttribute("href", "/locacao");
     expect(screen.getByRole("link", { name: "Sobre" })).toHaveAttribute("href", "/sobre");
     expect(screen.queryByRole("link", { name: "A Empresa" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Sobre" })).toHaveAttribute("aria-current", "page");
+  });
+
+  it("marca Vendas como ativo também no alias /venda", () => {
+    render(
+      <MemoryRouter initialEntries={["/venda"]}>
+        <Navbar />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("link", { name: "Vendas" })).toHaveAttribute("aria-current", "page");
   });
 
   it("mantém links públicos consistentes no footer", () => {
