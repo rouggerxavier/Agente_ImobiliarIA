@@ -43,14 +43,33 @@ jobs:
           mkdir -p "$HOME/.ssh"
           KEY_FILE="$HOME/.ssh/deploy_key"
           RAW_KEY="${DEPLOY_KEY//$'\r'/}"
+          RAW_KEY="${RAW_KEY%\"}"
+          RAW_KEY="${RAW_KEY#\"}"
+          TMP_FILE="$(mktemp)"
 
-          if [[ "$RAW_KEY" == *"\\n"* ]]; then
-            printf '%b' "$RAW_KEY" > "$KEY_FILE"
-          else
-            printf '%s\n' "$RAW_KEY" > "$KEY_FILE"
+          if [[ "$RAW_KEY" == ssh-rsa* || "$RAW_KEY" == ssh-ed25519* || "$RAW_KEY" == ecdsa-* ]]; then
+            echo "::error::ORACLE_SSH_KEY appears to be a PUBLIC key. Use the PRIVATE key (BEGIN OPENSSH PRIVATE KEY or BEGIN RSA PRIVATE KEY)."
+            exit 1
           fi
 
+          if [[ "$RAW_KEY" == *"BEGIN OPENSSH PRIVATE KEY"* || "$RAW_KEY" == *"BEGIN RSA PRIVATE KEY"* || "$RAW_KEY" == *"BEGIN EC PRIVATE KEY"* ]]; then
+            printf '%b' "$RAW_KEY" > "$TMP_FILE"
+          elif printf '%s' "$RAW_KEY" | base64 -d > "$TMP_FILE" 2>/dev/null; then
+            :
+          else
+            echo "::error::ORACLE_SSH_KEY invalid format. Provide the raw private key text or base64-encoded private key."
+            exit 1
+          fi
+
+          tr -d '\r' < "$TMP_FILE" > "$KEY_FILE"
+          rm -f "$TMP_FILE"
+
           chmod 600 "$KEY_FILE"
+
+          if ! ssh-keygen -y -f "$KEY_FILE" > /dev/null 2>&1; then
+            echo "::error::Could not parse private key from ORACLE_SSH_KEY. If this is a .ppk key, convert it to OpenSSH PEM first."
+            exit 1
+          fi
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.0
