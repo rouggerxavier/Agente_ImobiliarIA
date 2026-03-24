@@ -1,32 +1,36 @@
+import logging
 import os
 import secrets
-import logging
 from datetime import datetime
-from fastapi import FastAPI, Request, Depends, HTTPException, Header
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
-from pydantic import BaseModel, Field
+from pathlib import Path
+
 from dotenv import load_dotenv
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
 from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
-from app.agent.runtime import handle_message
-from app.agent.llm import LLM_PREWARM, prewarm_llm
-from app.core.logging import setup_logging
-from app.core.config import settings
-from app.routes.whatsapp import router as whatsapp_router
+from slowapi.util import get_remote_address
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+from agent.runtime import handle_message
+from app.db import init_db
+from core.config import settings
+from core.logging import setup_logging
+from routes.contato import router as contato_router
+from routes.imoveis import router as imoveis_router
+from routes.whatsapp import router as whatsapp_router
 
 load_dotenv(override=True)
 
-# Setup logging first
 setup_logging()
-
 logger = logging.getLogger(__name__)
 
-# Rate limiter: chave por IP
 limiter = Limiter(key_func=get_remote_address)
 
-app = FastAPI(title="Agente Imobiliário WhatsApp", version="0.1.0")
+app = FastAPI(title="Agente Imobiliario WhatsApp", version="0.1.0")
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
@@ -49,8 +53,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
+
+class SPAStaticFiles(StaticFiles):
+    """Static files with fallback to index.html for client-side routing."""
+
+    async def get_response(self, path: str, scope):
+        try:
+            return await super().get_response(path, scope)
+        except StarletteHTTPException as exc:
+            if exc.status_code == 404:
+                return await super().get_response("index.html", scope)
+            raise
+
+
+_BASE_DIR = Path(__file__).resolve().parents[1]
+_img_path = _BASE_DIR / "public" / "imoveis"
+if _img_path.is_dir():
+    app.mount("/imoveis-img", StaticFiles(directory=str(_img_path)), name="imoveis-img")
+
 app.include_router(whatsapp_router)
+app.include_router(imoveis_router)
+app.include_router(contato_router)
 
 
 class WebhookRequest(BaseModel):
@@ -60,17 +83,22 @@ class WebhookRequest(BaseModel):
 
 
 async def verify_api_key(x_api_key: str | None = Header(default=None, alias="X-API-Key")) -> None:
-    """Valida a chave de API no header X-API-Key.
-
-    Se WEBHOOK_API_KEY não estiver configurado, loga um aviso mas permite
-    acesso (compatibilidade com ambientes de desenvolvimento sem chave).
-    """
+    """Validate API key in X-API-Key header."""
     if not settings.WEBHOOK_API_KEY:
-        logger.warning("WEBHOOK_API_KEY não configurado - endpoint /webhook sem autenticação")
+        logger.warning("WEBHOOK_API_KEY nao configurado - endpoint /webhook sem autenticacao")
         return
     if not x_api_key or not secrets.compare_digest(x_api_key, settings.WEBHOOK_API_KEY):
-        logger.warning("Tentativa de acesso ao /webhook com chave inválida")
-        raise HTTPException(status_code=401, detail="Chave de API inválida ou ausente")
+        logger.warning("Tentativa de acesso ao /webhook com chave invalida")
+        raise HTTPException(status_code=401, detail="Chave de API invalida ou ausente")
+
+
+@app.get("/health")
+async def health():
+    return {
+        "status": "ok",
+        "service": "agente_imobiliario_api",
+        "timestamp": datetime.now().isoformat(),
+    }
 
 
 @app.get("/")
@@ -81,7 +109,7 @@ async def home():
     <!DOCTYPE html>
     <html>
     <head>
-        <title>Agente Imobiliário API</title>
+        <title>Agente Imobiliario API</title>
         <style>
             body {{
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -118,21 +146,21 @@ async def home():
     </head>
     <body>
         <div class="container">
-            <h1>Agente Imobiliário API</h1>
+            <h1>Agente Imobiliario API</h1>
             <p class="status">Status: Online</p>
             <div class="links">
                 <a href="/docs">API Documentation</a>
                 <a href="/health">Health Check</a>
             </div>
             <div class="info">
-                <p><strong>Endpoints disponíveis:</strong></p>
+                <p><strong>Endpoints disponiveis:</strong></p>
                 <ul>
-                    <li><code>GET /</code> - Esta página</li>
+                    <li><code>GET /</code> - Esta pagina</li>
                     <li><code>GET /health</code> - Health check</li>
                     <li><code>POST /webhook</code> - Webhook do agente (requer X-API-Key)</li>
-                    <li><code>GET /webhook/whatsapp</code> - Verificação WhatsApp</li>
+                    <li><code>GET /webhook/whatsapp</code> - Verificacao WhatsApp</li>
                     <li><code>POST /webhook/whatsapp</code> - Eventos WhatsApp</li>
-                    <li><code>GET /docs</code> - Documentação interativa</li>
+                    <li><code>GET /docs</code> - Documentacao interativa</li>
                 </ul>
                 <p style="margin-top: 20px;">
                     <small>Timestamp: {timestamp}</small>
@@ -145,27 +173,10 @@ async def home():
     return HTMLResponse(content=html_content)
 
 
-@app.get("/health")
-async def health():
-    """Health check endpoint - returns 200 OK with status."""
-    return {
-        "status": "ok",
-        "service": "agente_imobiliario_api",
-        "timestamp": datetime.now().isoformat(),
-    }
-
-
 @app.on_event("startup")
 async def _startup():
-    """Application startup - validate settings and log configuration."""
-    # Validate WhatsApp configuration
-    validation = settings.validate_whatsapp_config()
-    if validation["errors"]:
-        for error in validation["errors"]:
-            logger.error("Configuration error: %s", error)
-    if validation["warnings"]:
-        for warning in validation["warnings"]:
-            logger.warning("Configuration warning: %s", warning)
+    init_db()
+    settings.log_startup_issues()
 
     logger.info(
         "Application started - env=%s, log_level=%s, whatsapp_send=%s",
@@ -174,24 +185,19 @@ async def _startup():
         "disabled" if settings.DISABLE_WHATSAPP_SEND else "enabled",
     )
 
-    # Prewarm desativado para evitar chamadas iniciais ao LLM.
-    return
-
 
 @app.post("/webhook", dependencies=[Depends(verify_api_key)])
 @limiter.limit("30/minute")
 async def webhook(body: WebhookRequest, request: Request):
     correlation_id = os.urandom(8).hex()
     request.state.correlation_id = correlation_id
-    logger.info(
-        "webhook request - session=%s, msg_len=%d, correlation=%s",
-        body.session_id,
-        len(body.message),
-        correlation_id,
-    )
-    # Only expose the textual reply to the client; hide internal state/session details.
+    session_short = body.session_id[:8]
+
+    logger.info("USER [%s] %s (correlation=%s)", session_short, body.message[:300], correlation_id)
+
     result = handle_message(body.session_id, body.message, name=body.name, correlation_id=correlation_id)
     if isinstance(result, dict) and "reply" in result:
+        logger.info("AGENT [%s] %s (correlation=%s)", session_short, result["reply"][:300], correlation_id)
         return {"reply": result["reply"]}
     return result
 

@@ -13,7 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
-from db import get_db
+from app.db import get_db
 from models.imovel import Imovel
 
 router = APIRouter(prefix="/imoveis", tags=["imoveis"])

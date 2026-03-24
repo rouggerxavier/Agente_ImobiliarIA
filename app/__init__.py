@@ -1,1 +1,1 @@
-"""Compatibility package for legacy imports under ``app.*``."""
+"""Backend package with canonical app modules and compatibility bridges."""

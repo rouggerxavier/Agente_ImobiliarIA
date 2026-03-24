@@ -8,8 +8,8 @@ if TEST_DB_PATH.exists():
     TEST_DB_PATH.unlink()
 os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH.as_posix()}"
 
-from db import init_db  # noqa: E402
-from main import app  # noqa: E402
+from app.db import init_db  # noqa: E402
+from app.main import app  # noqa: E402
 
 client = TestClient(app)
 

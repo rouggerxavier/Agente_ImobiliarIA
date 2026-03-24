@@ -13,7 +13,7 @@ import requests
 from sqlalchemy.orm import Session
 
 from agent.multiagent.observability import emit_trace_event, log_structured
-from db import SessionLocal
+from app.db import SessionLocal
 from models.imovel import Imovel
 from services.geo_matching import enrich_imovel_payload
 

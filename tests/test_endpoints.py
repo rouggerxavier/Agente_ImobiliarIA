@@ -19,7 +19,7 @@ def test_home():
     """Test home page returns HTML."""
     response = client.get("/")
     assert response.status_code == 200
-    assert "Agente Imobiliário API" in response.text
+    assert "Agente Imobili" in response.text
     print("[OK] GET / - Home page OK")
 
 
@@ -74,7 +74,7 @@ def test_whatsapp_webhook_post():
                                 {
                                     "from": "5511999999999",
                                     "id": "msg_123",
-                                    "text": {"body": "Olá"},
+                                    "text": {"body": "Ola"},
                                 }
                             ]
                         }

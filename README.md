@@ -159,27 +159,28 @@ Ordem real executada em `agent/controller.py`:
 ```text
 .
 ├─ agent/                 # Nucleo de negocio conversacional
-├─ app/                   # Bridge de compatibilidade app.*
+├─ app/                   # Backend canonico (entrypoint + db + faq)
 ├─ core/                  # Configuracao e logging
 ├─ routes/                # Rotas FastAPI extras (WhatsApp)
 ├─ services/              # Integracoes externas (envio WhatsApp)
 ├─ data/                  # Dados de dominio + persistencia local
 ├─ src/                   # Frontend React + Vite
 ├─ public/                # Assets estaticos frontend
-├─ main.py                # Entry point backend em uso no Render
-├─ app/main.py            # Entry point alternativo (compat)
+├─ main.py                # Wrapper de compat para `app.main:app`
+├─ db.py                  # Wrapper de compat para `app.db`
+├─ faq.py                 # Wrapper de compat para `app.faq`
 ├─ requirements.txt       # Dependencias Python
 ├─ package.json           # Dependencias/scripts frontend
 ├─ render.yaml            # Config do Render Web Service
 ├─ runtime.txt            # Pin Python local/plataforma (3.11.9)
 ├─ .env.example           # Exemplo completo de configuracao
 ├─ scripts/frontend_cli.py # Cliente CLI para conversar com /webhook
-└─ test_*.py              # Suite extensa de testes (raiz)
+└─ tests/                 # Suite extensa de testes backend
 ```
 
 ### 3.2 Mapa detalhado de modulos backend
 
-#### `main.py` (entrypoint principal)
+#### `app/main.py` (entrypoint principal)
 - O que faz:
   - Inicializa FastAPI, CORS, rate limit, logging, rotas.
   - Exponibiliza `GET /health` e `POST /webhook`.
@@ -199,12 +200,10 @@ Ordem real executada em `agent/controller.py`:
 - ENV usada:
   - `FRONTEND_ORIGINS`, `PORT`, `WEBHOOK_API_KEY`, `LOG_LEVEL`, `APP_ENV`, WhatsApp envs.
 
-#### `app/main.py` (entrypoint alternativo)
+#### `main.py` (wrapper de compatibilidade)
 - O que faz:
-  - Mesma API base, mas com `GET /` retornando HTML status page.
-  - Imports via namespace `app.*`.
-- Observacao:
-  - `render.yaml` atual usa `main:app`, nao `app.main:app`.
+  - Reexporta `app` de `app.main`.
+  - Mantem compatibilidade com `uvicorn main:app` em deploy e scripts legados.
 
 #### `core/config.py`
 - O que faz:
