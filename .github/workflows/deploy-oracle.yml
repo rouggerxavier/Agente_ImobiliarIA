@@ -75,11 +75,19 @@ jobs:
 
           if [[ "$RAW_KEY" == *"BEGIN OPENSSH PRIVATE KEY"* || "$RAW_KEY" == *"BEGIN RSA PRIVATE KEY"* || "$RAW_KEY" == *"BEGIN EC PRIVATE KEY"* ]]; then
             printf '%b' "$RAW_KEY" > "$TMP_FILE"
-          elif printf '%s' "$RAW_KEY" | base64 -d > "$TMP_FILE" 2>/dev/null; then
-            :
           else
-            echo "::error::ORACLE_SSH_KEY invalid format. Provide the raw private key text or base64-encoded private key."
-            exit 1
+            B64_CLEAN="$(printf '%s' "$RAW_KEY" | tr -d '[:space:]')"
+            B64_STD="$(printf '%s' "$B64_CLEAN" | tr '_-' '/+')"
+            while (( ${#B64_STD} % 4 != 0 )); do
+              B64_STD="${B64_STD}="
+            done
+
+            if printf '%s' "$B64_STD" | base64 -d > "$TMP_FILE" 2>/dev/null; then
+              :
+            else
+              echo "::error::ORACLE_SSH_KEY invalid format. Provide raw private key text or valid base64 of the private key file."
+              exit 1
+            fi
           fi
 
           tr -d '\r' < "$TMP_FILE" > "$KEY_FILE"
