@@ -2,7 +2,7 @@
 
 ## Resumo
 - Objetivo: replicar localizacoes do legado `grankasa.com.br` para os imoveis ja persistidos no novo sistema, com matching auditavel, persistencia segura e validacao E2E com evidencias.
-- Resultado consolidado: ver [`docs/evidencias/geolocalizacao_auditoria.json`](./evidencias/geolocalizacao_auditoria.json).
+- Resultado consolidado: gerado localmente em `artifacts/geolocalizacao/geolocalizacao_auditoria.json` (nao versionado).
 
 ## Arquitetura operacional
 - Orquestrador: [`agent/multiagent/geolocation_pipeline.py`](../agent/multiagent/geolocation_pipeline.py)
@@ -41,18 +41,16 @@
   - [`src/pages/ImovelDetalhe.tsx`](../src/pages/ImovelDetalhe.tsx)
 
 ## Validacao E2E e evidencias
-- Screenshots por imovel:
-  - pasta [`docs/evidencias/screenshots`](./evidencias/screenshots)
-- Mapa de screenshots:
-  - [`docs/evidencias/geolocalizacao_screenshots.json`](./evidencias/geolocalizacao_screenshots.json)
-- Auditoria final por imovel:
-  - [`docs/evidencias/geolocalizacao_auditoria.json`](./evidencias/geolocalizacao_auditoria.json)
+- Todos os artefatos de evidencias sao gerados em `artifacts/geolocalizacao/` e ficam fora do Git (via `.gitignore`).
+- Auditoria final por imovel: `artifacts/geolocalizacao/geolocalizacao_auditoria.json`
+- Mapa de screenshots (codigo->screenshot_path): `artifacts/geolocalizacao/geolocalizacao_screenshots.json`
+- Screenshots por imovel: `artifacts/geolocalizacao/screenshots/`
 
 ## Como reproduzir
 1. Sincronizar geolocalizacao:
 ```bash
 python scripts/run_geolocation_superstage.py \
-  --screenshots-json docs/evidencias/geolocalizacao_screenshots.json
+  --screenshots-json artifacts/geolocalizacao/geolocalizacao_screenshots.json
 ```
 
 2. Rodar testes principais da superetapa:

@@ -9,12 +9,15 @@ Objetivo: Aumentar completude e confiança de leads warm/cold antes do handoff.
 
 from __future__ import annotations
 import json
+import logging
 import os
 import threading
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional, Iterator
 from pathlib import Path
 from .geo_normalizer import location_key
+
+logger = logging.getLogger(__name__)
 
 
 # Lock para escrita atômica
@@ -35,7 +38,7 @@ def load_leads(path: str = "data/leads.jsonl") -> Iterator[Dict[str, Any]]:
         Dicionário com dados do lead
     """
     if not os.path.exists(path):
-        print(f"[FOLLOWUP] Arquivo de leads não encontrado: {path}")
+        logger.warning("[FOLLOWUP] Arquivo de leads nao encontrado: %s", path)
         return
 
     try:
@@ -47,10 +50,10 @@ def load_leads(path: str = "data/leads.jsonl") -> Iterator[Dict[str, Any]]:
                         lead = json.loads(line)
                         yield lead
                     except json.JSONDecodeError as e:
-                        print(f"[FOLLOWUP] Erro ao parsear linha: {e}")
+                        logger.warning("[FOLLOWUP] Erro ao parsear linha JSONL: %s", e)
                         continue
     except Exception as e:
-        print(f"[FOLLOWUP] Erro ao carregar leads: {e}")
+        logger.exception("[FOLLOWUP] Erro ao carregar leads: %s", e)
 
 
 def load_followup_history(path: str = None) -> Dict[str, List[str]]:
@@ -85,7 +88,7 @@ def load_followup_history(path: str = None) -> Dict[str, List[str]]:
                     except json.JSONDecodeError:
                         continue
     except Exception as e:
-        print(f"[FOLLOWUP] Erro ao carregar histórico: {e}")
+        logger.exception("[FOLLOWUP] Erro ao carregar historico: %s", e)
 
     return history
 
@@ -115,7 +118,7 @@ def save_followup_sent(session_id: str, followup_key: str, path: str = None) -> 
             with open(path, "a", encoding="utf-8") as f:
                 f.write(json.dumps(entry, ensure_ascii=False) + "\n")
         except Exception as e:
-            print(f"[FOLLOWUP] Erro ao salvar follow-up: {e}")
+            logger.exception("[FOLLOWUP] Erro ao salvar follow-up: %s", e)
 
 
 def should_followup(lead: Dict[str, Any], followup_history: Dict[str, List[str]]) -> bool:

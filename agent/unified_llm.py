@@ -4,6 +4,7 @@ Reduz de 4 chamadas para 1 por mensagem
 """
 
 from __future__ import annotations
+import logging
 import os
 from typing import Dict, Any, Optional
 from .llm import call_llm, GROQ_API_KEY
@@ -11,6 +12,8 @@ from .state import SessionState
 
 # Flag global para controlar uso de LLM
 USE_LLM = os.getenv("USE_LLM", "true").lower() == "true"
+
+logger = logging.getLogger(__name__)
 
 # Prompt CURTO e otimizado
 UNIFIED_PROMPT = """Você é assistente imobiliário. Analise a mensagem e retorne JSON:
@@ -95,9 +98,9 @@ def llm_decide(
         # Se falhar, retorna estrutura vazia para fallback
         error_msg = str(e)
         if "429" in error_msg or "rate_limit" in error_msg.lower():
-            print(f"⚠️ Rate limit atingido, usando fallback total")
+            logger.warning("Rate limit atingido no LLM; usando fallback total.")
         else:
-            print(f"⚠️ LLM falhou: {e}, usando fallback")
+            logger.exception("Falha no LLM; usando fallback. erro=%s", e)
         
         return {
             "intent": None,

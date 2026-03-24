@@ -6,10 +6,13 @@ Identifica gaps específicos e gera perguntas cirúrgicas para melhorar a qualid
 """
 
 from __future__ import annotations
+import logging
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
 from .state import SessionState
 from .rules import CRITICAL_ORDER
+
+logger = logging.getLogger(__name__)
 
 # === CONFIGURAÇÕES DO QUALITY GATE ===
 
@@ -49,12 +52,15 @@ def should_handoff(state: SessionState, quality: Dict[str, Any]) -> bool:
 
     # 1. Se atingiu limite de perguntas de gate, permitir handoff mesmo com score baixo
     if state.quality_gate_turns >= MAX_QUALITY_GATE_TURNS:
-        print(f"[QUALITY_GATE] Handoff permitido: limite de {MAX_QUALITY_GATE_TURNS} perguntas atingido")
+        logger.info(
+            "[QUALITY_GATE] Handoff permitido: limite de %s perguntas atingido",
+            MAX_QUALITY_GATE_TURNS,
+        )
         return True
 
     # 2. Se quality_score é A ou B, permitir handoff
     if grade in {"A", "B"} or score >= QUALITY_GATE_MIN_SCORE:
-        print(f"[QUALITY_GATE] Handoff permitido: grade={grade}, score={score}")
+        logger.info("[QUALITY_GATE] Handoff permitido: grade=%s score=%s", grade, score)
         return True
 
     # 3. Se score é C ou D, verificar se há gaps que podem ser preenchidos
@@ -63,11 +69,18 @@ def should_handoff(state: SessionState, quality: Dict[str, Any]) -> bool:
     # Se não há campos missing/ambiguous/conflicting relevantes, permitir handoff
     total_gaps = len(gaps.missing_required_fields) + len(gaps.ambiguous_fields) + len(gaps.conflicting_fields)
     if total_gaps == 0:
-        print(f"[QUALITY_GATE] Handoff permitido: sem gaps relevantes (grade={grade})")
+        logger.info("[QUALITY_GATE] Handoff permitido: sem gaps relevantes (grade=%s)", grade)
         return True
 
     # 4. Se há gaps e ainda não atingiu limite, bloquear handoff
-    print(f"[QUALITY_GATE] Handoff bloqueado: grade={grade}, score={score}, gaps={total_gaps}, turns={state.quality_gate_turns}/{MAX_QUALITY_GATE_TURNS}")
+    logger.info(
+        "[QUALITY_GATE] Handoff bloqueado: grade=%s score=%s gaps=%s turns=%s/%s",
+        grade,
+        score,
+        total_gaps,
+        state.quality_gate_turns,
+        MAX_QUALITY_GATE_TURNS,
+    )
     return False
 
 
@@ -259,7 +272,11 @@ def mark_field_refusal(state: SessionState, field: str) -> None:
     """
     current_count = state.field_refusals.get(field, 0)
     state.field_refusals[field] = current_count + 1
-    print(f"[QUALITY_GATE] Campo '{field}' marcado como recusado (count={state.field_refusals[field]})")
+    logger.info(
+        "[QUALITY_GATE] Campo recusado: field=%s count=%s",
+        field,
+        state.field_refusals[field],
+    )
 
 
 def detect_field_refusal(message: str) -> bool:

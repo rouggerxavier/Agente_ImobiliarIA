@@ -45,12 +45,12 @@ def main() -> None:
     )
     parser.add_argument(
         "--report-path",
-        default="docs/evidencias/geolocalizacao_auditoria.json",
+        default="artifacts/geolocalizacao/geolocalizacao_auditoria.json",
         help="Arquivo JSON de auditoria final por imovel.",
     )
     parser.add_argument(
         "--screenshots-json",
-        default="docs/evidencias/geolocalizacao_screenshots.json",
+        default="artifacts/geolocalizacao/geolocalizacao_screenshots.json",
         help="JSON com mapeamento codigo->screenshot_path (gerado na validacao E2E).",
     )
     parser.add_argument(

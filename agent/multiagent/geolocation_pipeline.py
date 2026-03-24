@@ -37,8 +37,8 @@ def _extract_map_url_from_html(raw_html: str) -> str | None:
 class GeoPipelineConfig:
     legacy_catalog_path: Path = Path("data/grankasa_catalog_enriched.json")
     trace_path: Path = Path("data/geo_localizacao_trace.jsonl")
-    report_path: Path = Path("docs/evidencias/geolocalizacao_auditoria.json")
-    screenshot_report_path: Path = Path("docs/evidencias/geolocalizacao_screenshots.json")
+    report_path: Path = Path("artifacts/geolocalizacao/geolocalizacao_auditoria.json")
+    screenshot_report_path: Path = Path("artifacts/geolocalizacao/geolocalizacao_screenshots.json")
     fetch_missing_map_url: bool = True
     persist_probable_matches: bool = False
     http_timeout_seconds: float = 10.0

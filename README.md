@@ -173,7 +173,7 @@ Ordem real executada em `agent/controller.py`:
 ├─ render.yaml            # Config do Render Web Service
 ├─ runtime.txt            # Pin Python local/plataforma (3.11.9)
 ├─ .env.example           # Exemplo completo de configuracao
-├─ frontend.py            # Cliente CLI para conversar com /webhook
+├─ scripts/frontend_cli.py # Cliente CLI para conversar com /webhook
 └─ test_*.py              # Suite extensa de testes (raiz)
 ```
 
@@ -252,7 +252,7 @@ Ordem real executada em `agent/controller.py`:
   - `detect_faq_intent`.
   - `answer_faq`.
 
-#### `frontend.py`
+#### `scripts/frontend_cli.py`
 - O que faz:
   - Cliente CLI para testar conversa com o backend sem navegador.
 - Funcoes:
@@ -355,7 +355,7 @@ Ordem real executada em `agent/controller.py`:
 - Responsabilidade:
   - Roteamento deterministico para corretor.
 - Inputs:
-  - `data/agents.json`, `data/agent_stats.json`, estado do lead.
+  - `data/agents.json` (local; use `data/agents.example.json` como base), `data/agent_stats.json` (gerado), estado do lead.
 - Output:
   - `RoutingResult`.
 - Persistencia extra:
@@ -524,7 +524,7 @@ Impacto:
 | `LOG_LEVEL` | nao | `INFO` | `core/config.py`, `core/logging.py` | default `INFO` |
 | `PORT` | nao (Render injeta) | `8000` | `main.py`, `app/main.py`, `core/config.py` | default `8000` |
 | `FRONTEND_ORIGINS` | nao | `https://frontend.exemplo.com` | `main.py`, `app/main.py` (CORS) | usa allowlist localhost |
-| `WEBHOOK_API_KEY` | recomendado | `hex_64_chars` | `main.py verify_api_key`, `frontend.py` | `/webhook` fica sem autenticacao por header |
+| `WEBHOOK_API_KEY` | recomendado | `hex_64_chars` | `main.py verify_api_key`, `scripts/frontend_cli.py` | `/webhook` fica sem autenticacao por header |
 | `DISABLE_WHATSAPP_SEND` | nao | `true` | `core/config.py`, `services/whatsapp_sender.py` | default `true` (modo teste) |
 | `WHATSAPP_VERIFY_TOKEN` | sim para validar GET do webhook Meta | `token_verificacao` | `core/config.py`, `routes/whatsapp.py` | `GET /webhook/whatsapp` retorna erro 500 |
 | `WHATSAPP_APP_SECRET` | recomendado em prod | `app_secret` | `core/config.py`, `routes/whatsapp.verify_signature` | assinatura nao e validada |
@@ -556,7 +556,7 @@ Impacto:
 | `QUESTION_SEED` | nao | `seed123` | `agent/rules.py` | usa `default` |
 | `SLA_HOT_THRESHOLD` | nao | `80` | `agent/sla.py` | default `80` |
 | `SLA_WARM_THRESHOLD` | nao | `50` | `agent/sla.py` | default `50` |
-| `BACKEND_URL` | nao (CLI local) | `http://localhost:8000` | `frontend.py` | default localhost |
+| `BACKEND_URL` | nao (CLI local) | `http://localhost:8000` | `scripts/frontend_cli.py` | default localhost |
 | `VITE_BACKEND_URL` | sim para frontend separado | `https://api.exemplo.com` | `src/components/ChatWidget.tsx` | vira `""` e usa path relativo |
 | `VITE_BACKEND_API_KEY` | opcional | `mesmo_valor_WEBHOOK_API_KEY` | `src/components/ChatWidget.tsx` | sem header `X-API-Key` |
 

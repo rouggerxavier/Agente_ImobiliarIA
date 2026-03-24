@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *.pyo
 .pytest_cache/
+CACHEDIR.TAG
 
 # Virtual environment
 .venv/
@@ -29,3 +30,22 @@ Thumbs.db
 test-results/
 .tmp*
 tmp_*.txt
+
+# Codex local runbook/artifacts
+.codex/
+
+# VS Code local settings
+.vscode/
+
+# Generated docs evidence / artifacts (not versioned)
+docs/evidencias/
+artifacts/
+
+# Runtime data/logs (keep only examples)
+data/*.jsonl
+!data/*.example.jsonl
+data/*.log
+data/*_trace.jsonl
+data/agent_stats.json
+data/agents.json
+data/leads_index.json

@@ -8,9 +8,12 @@ Classifica leads em HOT/WARM/COLD e define ações automáticas:
 """
 
 from __future__ import annotations
+import logging
 import os
 from typing import Dict, Any, Literal, Tuple, Optional
 from .state import SessionState
+
+logger = logging.getLogger(__name__)
 
 # === CONFIGURAÇÕES DE THRESHOLDS ===
 
@@ -168,7 +171,10 @@ def should_emit_hot_event(session_state: SessionState, lead_class: LeadClass) ->
         return False
 
     if session_state.hot_lead_emitted:
-        print(f"[SLA] HOT_LEAD já emitido para session_id={session_state.session_id}, ignorando duplicata")
+        logger.info(
+            "[SLA] HOT_LEAD ja emitido; ignorando duplicata session_id=%s",
+            session_state.session_id,
+        )
         return False
 
     return True

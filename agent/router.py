@@ -7,6 +7,7 @@ sem uso de LLM. Inclui controle de capacidade diária e round-robin para balance
 
 from __future__ import annotations
 import json
+import logging
 import os
 import threading
 from datetime import datetime, date
@@ -29,6 +30,8 @@ DEFAULT_ROUTING_LOG_PATH = os.getenv("ROUTING_LOG_PATH")
 if not DEFAULT_ROUTING_LOG_PATH:
     base_dir = "/mnt/data" if os.path.exists("/mnt/data") else "data"
     DEFAULT_ROUTING_LOG_PATH = os.path.join(base_dir, "routing_log.jsonl")
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -102,17 +105,17 @@ def load_agents(path: str = "data/agents.json") -> List[Agent]:
         if os.path.exists(example_path):
             path = example_path
         else:
-            print(f"[ROUTER] Arquivo de agentes não encontrado: {path}")
+            logger.warning("[ROUTER] Arquivo de agentes nao encontrado: %s", path)
             return []
 
     try:
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
         agents = [Agent.from_dict(a) for a in data]
-        print(f"[ROUTER] Carregados {len(agents)} agentes de {path}")
+        logger.info("[ROUTER] Carregados %s agentes de %s", len(agents), path)
         return agents
     except Exception as e:
-        print(f"[ROUTER] Erro ao carregar agentes: {e}")
+        logger.exception("[ROUTER] Erro ao carregar agentes: %s", e)
         return []
 
 
@@ -142,7 +145,7 @@ def load_stats(path: str = "data/agent_stats.json") -> Dict[str, AgentStats]:
 
         if last_reset != today:
             # Reset diário: zera assigned_today
-            print(f"[ROUTER] Reset diário de stats (last={last_reset}, today={today})")
+            logger.info("[ROUTER] Reset diario de stats last=%s today=%s", last_reset, today)
             for agent_id, agent_data in agents_data.items():
                 stats[agent_id] = AgentStats(
                     assigned_today=0,
@@ -158,7 +161,7 @@ def load_stats(path: str = "data/agent_stats.json") -> Dict[str, AgentStats]:
 
         return stats
     except Exception as e:
-        print(f"[ROUTER] Erro ao carregar stats: {e}")
+        logger.exception("[ROUTER] Erro ao carregar stats: %s", e)
         return {}
 
 
@@ -196,7 +199,7 @@ def save_stats(stats: Dict[str, AgentStats], path: str = "data/agent_stats.json"
                 os.rename(temp_path, path)
 
         except Exception as e:
-            print(f"[ROUTER] Erro ao salvar stats: {e}")
+            logger.exception("[ROUTER] Erro ao salvar stats: %s", e)
 
 
 def _log_routing_event(event: Dict[str, Any], path: Optional[str]) -> None:
@@ -210,7 +213,7 @@ def _log_routing_event(event: Dict[str, Any], path: Optional[str]) -> None:
             with open(path, "a", encoding="utf-8") as f:
                 f.write(line + "\n")
     except Exception as e:
-        print(f"[ROUTER] warn=log_failed error={e}")
+        logger.warning("[ROUTER] warn=log_failed error=%s", e)
 
 
 def _normalize_neighborhood(neighborhood: Optional[str]) -> Optional[str]:
@@ -390,7 +393,7 @@ def choose_agent(
         RoutingResult com agente escolhido ou None se nenhum disponível
     """
     if not agents:
-        print(f"[ROUTER] no_agents_available correlation={correlation_id}")
+        logger.warning("[ROUTER] no_agents_available correlation=%s", correlation_id)
         return None
 
     # Carrega stats
@@ -412,7 +415,7 @@ def choose_agent(
             scored_agents.append((agent, score, reasons))
 
     if not scored_agents:
-        print(f"[ROUTER] no_compatible_agents correlation={correlation_id}")
+        logger.warning("[ROUTER] no_compatible_agents correlation=%s", correlation_id)
         return _fallback_agent(agents, stats, lead_state, allow_mismatch=match_found, stats_path=stats_path, correlation_id=correlation_id, routing_log_path=routing_log_path)
 
     # Ordena por score (desc), depois por assigned_today (asc), depois por last_assigned_at (asc/null first)
@@ -440,15 +443,14 @@ def choose_agent(
     save_stats(stats, stats_path)
 
     # Logs estruturados (console + JSONL)
-    print(
-        "[ROUTER] assigned_agent={agent_id} name={agent_name} temp={temp} score={score} reasons={reasons} correlation={cid}".format(
-            agent_id=best_agent.id,
-            agent_name=best_agent.name,
-            temp=lead_state.lead_score.temperature,
-            score=best_score,
-            reasons=best_reasons,
-            cid=correlation_id,
-        )
+    logger.info(
+        "[ROUTER] assigned_agent=%s name=%s temp=%s score=%s reasons=%s correlation=%s",
+        best_agent.id,
+        best_agent.name,
+        lead_state.lead_score.temperature,
+        best_score,
+        best_reasons,
+        correlation_id,
     )
     _log_routing_event(
         {
@@ -523,7 +525,7 @@ def _fallback_agent(
         stats[fallback.id].last_assigned_at = datetime.utcnow().isoformat() + "Z"
         save_stats(stats, stats_path)
 
-        print(f"[ROUTER] fallback=generalista agent={fallback.id} correlation={correlation_id}")
+        logger.info("[ROUTER] fallback=generalista agent=%s correlation=%s", fallback.id, correlation_id)
         _log_routing_event(
             {
                 "timestamp": datetime.utcnow().isoformat() + "Z",
@@ -559,11 +561,15 @@ def _fallback_agent(
         fallback = active[0]
 
         if lead_neighborhood and not allow_mismatch:
-            print(f"[ROUTER] no_match neighborhood={lead_neighborhood} correlation={correlation_id}")
+            logger.info(
+                "[ROUTER] no_match neighborhood=%s correlation=%s",
+                lead_neighborhood,
+                correlation_id,
+            )
             return None
 
         strategy = "fallback_default_queue_mismatch" if lead_neighborhood else "fallback_default_queue"
-        print(f"[ROUTER] {strategy} agent={fallback.id} correlation={correlation_id}")
+        logger.info("[ROUTER] %s agent=%s correlation=%s", strategy, fallback.id, correlation_id)
 
         if fallback.id not in stats:
             stats[fallback.id] = AgentStats()
@@ -598,7 +604,7 @@ def _fallback_agent(
             fallback=True
         )
 
-    print(f"[ROUTER] no_fallback_available correlation={correlation_id}")
+    logger.warning("[ROUTER] no_fallback_available correlation=%s", correlation_id)
     return None
 
 
@@ -626,11 +632,11 @@ def route_lead(
     try:
         agents = load_agents(agents_path)
         if not agents:
-            print(f"[ROUTER] no_agents_loaded fallback=null correlation={correlation_id}")
+            logger.warning("[ROUTER] no_agents_loaded fallback=null correlation=%s", correlation_id)
             return None
 
         return choose_agent(agents, lead_state, stats_path, correlation_id, priority=priority, routing_log_path=routing_log_path)
 
     except Exception as e:
-        print(f"[ROUTER] error={e} fallback=null correlation={correlation_id}")
+        logger.exception("[ROUTER] error=%s fallback=null correlation=%s", e, correlation_id)
         return None
