@@ -35,6 +35,27 @@ jobs:
             echo "::error::Missing SSH key. Configure ORACLE_SSH_KEY (or OCI_SSH_KEY) in repository secrets."
             exit 1
           fi
+          if [[ "${DEPLOY_HOST}" == *"://"* || "${DEPLOY_HOST}" == *"/"* || "${DEPLOY_HOST}" == *" "* ]]; then
+            echo "::error::Invalid host format in ORACLE_HOST/OCI_HOST. Use only hostname or IP (without protocol/path/spaces)."
+            exit 1
+          fi
+          if [[ ! "${DEPLOY_USER}" =~ ^[a-z_][a-z0-9_-]*[$]?$ ]]; then
+            echo "::error::Invalid SSH username in ORACLE_USER/OCI_USER."
+            exit 1
+          fi
+          if [[ ! "${DEPLOY_PORT}" =~ ^[0-9]+$ ]] || (( DEPLOY_PORT < 1 || DEPLOY_PORT > 65535 )); then
+            echo "::error::Invalid SSH port in ORACLE_SSH_PORT/OCI_SSH_PORT. Use an integer between 1 and 65535."
+            exit 1
+          fi
+
+      - name: Validate SSH endpoint reachability
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout 8 bash -c "cat < /dev/null > /dev/tcp/${DEPLOY_HOST}/${DEPLOY_PORT}" || {
+            echo "::error::Cannot reach ${DEPLOY_HOST}:${DEPLOY_PORT} from GitHub runner. Check Oracle NSG/Security List and host/port."
+            exit 1
+          }
 
       - name: Prepare SSH key file
         shell: bash
