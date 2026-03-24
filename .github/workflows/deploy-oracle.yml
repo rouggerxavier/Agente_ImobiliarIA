@@ -12,6 +12,7 @@ jobs:
       DEPLOY_HOST: ${{ secrets.ORACLE_HOST || secrets.OCI_HOST || vars.ORACLE_HOST || vars.OCI_HOST }}
       DEPLOY_USER: ${{ secrets.ORACLE_USER || secrets.OCI_USER || vars.ORACLE_USER || vars.OCI_USER }}
       DEPLOY_KEY: ${{ secrets.ORACLE_SSH_KEY || secrets.OCI_SSH_KEY }}
+      DEPLOY_PASSPHRASE: ${{ secrets.ORACLE_SSH_PASSPHRASE || secrets.OCI_SSH_PASSPHRASE }}
       DEPLOY_PORT: ${{ secrets.ORACLE_SSH_PORT || secrets.OCI_SSH_PORT || vars.ORACLE_SSH_PORT || vars.OCI_SSH_PORT || '22' }}
 
     steps:
@@ -35,12 +36,29 @@ jobs:
             exit 1
           fi
 
+      - name: Prepare SSH key file
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.ssh"
+          KEY_FILE="$HOME/.ssh/deploy_key"
+          RAW_KEY="${DEPLOY_KEY//$'\r'/}"
+
+          if [[ "$RAW_KEY" == *"\\n"* ]]; then
+            printf '%b' "$RAW_KEY" > "$KEY_FILE"
+          else
+            printf '%s\n' "$RAW_KEY" > "$KEY_FILE"
+          fi
+
+          chmod 600 "$KEY_FILE"
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ env.DEPLOY_HOST }}
           username: ${{ env.DEPLOY_USER }}
-          key: ${{ env.DEPLOY_KEY }}
+          key_path: /home/runner/.ssh/deploy_key
+          passphrase: ${{ env.DEPLOY_PASSPHRASE }}
           port: ${{ env.DEPLOY_PORT }}
           script_stop: true
           script: |
