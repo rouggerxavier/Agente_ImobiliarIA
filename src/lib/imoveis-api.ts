@@ -87,6 +87,25 @@ export interface NewsletterPayload {
   email: string;
 }
 
+const LOCAL_CATALOG_IMAGES = {
+  locacao: [
+    "/imoveis/locacao-01.jpg",
+    "/imoveis/locacao-02.jpg",
+    "/imoveis/locacao-03.jpg",
+    "/imoveis/locacao-04.jpg",
+    "/imoveis/locacao-05.jpg",
+  ],
+  venda: [
+    "/imoveis/venda-01.jpg",
+    "/imoveis/venda-02.jpg",
+    "/imoveis/venda-03.jpg",
+    "/imoveis/venda-04.jpg",
+    "/imoveis/venda-05.jpg",
+  ],
+} as const;
+
+const LEGACY_DEAD_IMAGE_HOSTS = new Set(["cdn.vistahost.com.br"]);
+
 export class ApiError extends Error {
   status: number;
   code: ApiErrorCode;
@@ -354,6 +373,40 @@ function normalizeUf(value: unknown): string {
   return normalized.toUpperCase();
 }
 
+function hashCatalogSeed(value: string): number {
+  let hash = 0;
+  for (const char of value) {
+    hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  }
+  return hash;
+}
+
+function localCatalogImageFor(imovel: Imovel): string {
+  const imagePool = imovel.tipo_negocio === "venda" ? LOCAL_CATALOG_IMAGES.venda : LOCAL_CATALOG_IMAGES.locacao;
+  const seed = `${imovel.codigo}:${imovel.tipo_negocio}:${imovel.bairro}:${imovel.cidade}`;
+  return imagePool[hashCatalogSeed(seed) % imagePool.length] || "/catalogo-fallback.jpg";
+}
+
+function normalizeFotoUrl(imovel: Imovel): string {
+  const rawValue = typeof imovel.foto_url === "string" ? imovel.foto_url.trim() : "";
+  if (!rawValue) return localCatalogImageFor(imovel);
+  if (/logo\.png/i.test(rawValue)) return localCatalogImageFor(imovel);
+
+  try {
+    const parsed = new URL(rawValue, "http://localhost");
+    const isLegacyDeadCatalogImage =
+      LEGACY_DEAD_IMAGE_HOSTS.has(parsed.hostname) && parsed.pathname.includes("/grankasa/vista.imobi/fotos/");
+
+    if (isLegacyDeadCatalogImage) {
+      return localCatalogImageFor(imovel);
+    }
+  } catch {
+    return rawValue;
+  }
+
+  return rawValue;
+}
+
 function joinLocationPieces(...pieces: Array<string | null | undefined>): string {
   return pieces.filter(Boolean).join(", ");
 }
@@ -455,11 +508,13 @@ function sanitizeImovel(imovel: Imovel): Imovel {
   const ponto_referencia = imovel.ponto_referencia
     ? normalizeLegacyDisplayText(repairMojibake(imovel.ponto_referencia))
     : imovel.ponto_referencia;
+  const foto_url = normalizeFotoUrl(imovel);
 
   return {
     ...imovel,
     titulo,
     descricao,
+    foto_url,
     categoria,
     finalidade,
     bairro,

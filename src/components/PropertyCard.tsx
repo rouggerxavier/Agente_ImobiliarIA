@@ -21,6 +21,10 @@ const PropertyCard = ({ image, title, location, price, beds, baths, area, href }
           alt={title}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           loading="lazy"
+          onError={(event) => {
+            event.currentTarget.onerror = null;
+            event.currentTarget.src = "/catalogo-fallback.jpg";
+          }}
         />
         <span className="absolute left-3 top-3 rounded-full bg-accent px-3 py-1 font-body text-xs font-semibold text-accent-foreground">
           {price}

@@ -103,6 +103,30 @@ describe("imoveis-api", () => {
     expect(response[0].data_source).toBe("api");
   });
 
+  it("substitui URLs legadas de imagem que retornam 410 por imagens locais estaveis", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/health")) return jsonResponse({ status: "ok", service: "agente_imobiliario_api" });
+      if (url.includes("/imoveis/locacao")) {
+        return jsonResponse([
+          {
+            ...fakeImovel,
+            codigo: "9921",
+            foto_url: "https://cdn.vistahost.com.br/grankasa/vista.imobi/fotos/9921/iSxm3_9921699f4d1aa9ed2.jpg",
+          },
+        ]);
+      }
+      return jsonResponse([]);
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await fetchImoveisPorTipo("locacao", { limit: 1 });
+
+    expect(response[0].foto_url).toMatch(/^\/imoveis\/locacao-0[1-5]\.jpg$/);
+    expect(response[0].data_source).toBe("api");
+  });
+
   it("normaliza variacoes legadas de acentuacao e capitalizacao", async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);

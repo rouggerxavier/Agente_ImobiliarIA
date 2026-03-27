@@ -25,6 +25,10 @@ export default defineConfig(({ mode }) => {
           target: backendTarget,
           changeOrigin: true,
         },
+        "/imoveis-img": {
+          target: backendTarget,
+          changeOrigin: true,
+        },
       },
       hmr: {
         overlay: false,
