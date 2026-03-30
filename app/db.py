@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import os
+import sys
 from collections.abc import Generator
 from pathlib import Path
 
@@ -37,6 +38,21 @@ engine = create_engine(DATABASE_URL, pool_pre_ping=True, connect_args=connect_ar
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
+
+
+def _prepare_metadata_for_model_reload() -> None:
+    """
+    Clear stale SQLAlchemy table metadata before a forced model re-import in tests.
+
+    Some tests remove `models.imovel` from `sys.modules` and then call `init_db()`
+    again while reusing the already-imported `app.db` module. In this case the old
+    `Base.metadata` still contains the previous `imoveis` table definition, which
+    causes duplicate table registration during the new import.
+    """
+    if "models.imovel" in sys.modules:
+        return
+    if Base.metadata.tables:
+        Base.metadata.clear()
 
 
 def _sqlite_schema_needs_reset() -> bool:
@@ -92,6 +108,7 @@ def _ensure_missing_columns() -> list[str]:
 
 def init_db() -> None:
     """Create tables if they do not exist."""
+    _prepare_metadata_for_model_reload()
     # Import model modules here to ensure metadata is populated.
     from models import imovel as _imovel  # noqa: F401
     from seeds.imoveis_seed import seed_imoveis

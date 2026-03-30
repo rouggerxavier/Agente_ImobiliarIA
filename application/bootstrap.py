@@ -1,9 +1,5 @@
-"""
-Bootstrap do fluxo das fases 3 e 4.
-"""
+"""Bootstrap do runtime operacional das fases 3 a 6."""
 from __future__ import annotations
-
-import agent.knowledge_base as legacy_kb
 
 from application.catalog import CatalogService
 from application.conversation_orchestrator import ConversationOrchestrator, MessageInput
@@ -21,7 +17,7 @@ def get_phase34_runtime() -> dict:
 
     repos = create_persistent_repos()
     catalog = CatalogService(repos["properties"], repos["recommendations"])
-    knowledge = KnowledgeService(legacy_kb=legacy_kb)
+    knowledge = KnowledgeService()
     crm = CRMService(repos["leads"], repos["brokers"], repos["assignments"])
     orchestrator = ConversationOrchestrator(
         lead_repo=repos["leads"],

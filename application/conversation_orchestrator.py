@@ -107,6 +107,7 @@ class OrchestratorGraphState:
     latest_user_message: Optional[Message] = None
     latest_assistant_message: Optional[Message] = None
     knowledge_sources: List[str] = field(default_factory=list)
+    knowledge_reply: str = ""
     catalog_reply: str = ""
     node_metrics: Dict[str, int] = field(default_factory=dict)
     execution_cost_usd: float = 0.0
@@ -343,6 +344,7 @@ class ConversationOrchestrator:
             return
         graph_state.knowledge_sources = list(result.sources)
         graph_state.retrieval_context.extend(result.retrieved_chunks or [])
+        graph_state.knowledge_reply = result.reply_text
         graph_state.confidence = max(graph_state.confidence, float(result.confidence or 0.5))
 
     def _node_retrieve_properties(self, lead: Lead, conversation: Conversation, graph_state: OrchestratorGraphState) -> None:
@@ -374,6 +376,9 @@ class ConversationOrchestrator:
             name=graph_state.message_input.sender_name,
             correlation_id=graph_state.trace_id,
         )
+        if graph_state.detected_intent == DetectedIntent.FAQ and graph_state.knowledge_reply:
+            payload["reply"] = self._merge_knowledge_reply(payload.get("reply", ""), graph_state.knowledge_reply)
+            payload["sources"] = list(graph_state.knowledge_sources)
         if graph_state.property_recommendations and not payload.get("properties"):
             payload["properties"] = graph_state.property_recommendations
             payload["reply"] = self._merge_catalog_reply(payload.get("reply", ""), graph_state.catalog_reply)
@@ -586,6 +591,7 @@ class ConversationOrchestrator:
             "conversation_summary": graph_state.conversation_summary,
             "detected_intent": graph_state.detected_intent.value,
             "retrieval_context": graph_state.retrieval_context,
+            "knowledge_sources": graph_state.knowledge_sources,
             "property_candidates": graph_state.property_candidates,
             "lead_score": graph_state.lead_score,
             "routing_decision": graph_state.routing_decision,
@@ -629,6 +635,20 @@ class ConversationOrchestrator:
         if catalog in base:
             return base
         return f"{base}\n\n{catalog}"
+
+    def _merge_knowledge_reply(self, base_reply: str, knowledge_reply: str) -> str:
+        knowledge = (knowledge_reply or "").strip()
+        base = (base_reply or "").strip()
+        if not knowledge:
+            return base
+        if not base:
+            return knowledge
+        lowered = base.lower()
+        if "fontes internas:" in lowered:
+            return base
+        if knowledge in base:
+            return base
+        return f"{knowledge}\n\n{base}"
 
     def _build_context_window(self, messages: List[Message], summary: ConversationSummary) -> List[str]:
         window: List[str] = []

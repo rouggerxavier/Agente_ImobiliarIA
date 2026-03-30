@@ -1,0 +1,13 @@
+2026-03-30 11:46:45 - seeds.imoveis_seed - INFO - seed_imoveis source=legacy_audit records=127 db_records=127 changes=False
+2026-03-30 11:46:45 - app.db - INFO - Database initialized db_url=sqlite:///./data/imoveis.db reset_triggered=False missing_columns=[]
+2026-03-30 11:46:45 - core.config - WARNING - [CONFIG] WHATSAPP_VERIFY_TOKEN não configurado — webhook de verificação do WhatsApp desativado (modo dev: OK)
+2026-03-30 11:46:45 - core.config - WARNING - [CONFIG] WHATSAPP_APP_SECRET não configurado — validação de assinatura do webhook desativada
+2026-03-30 11:46:45 - core.config - WARNING - [CONFIG] DISABLE_WHATSAPP_SEND=true — envio de mensagens desativado (modo teste)
+2026-03-30 11:46:45 - core.config - WARNING - [CONFIG] WEBHOOK_API_KEY não configurado — endpoint /webhook sem proteção. Gere com: python -c "import secrets; print(secrets.token_hex(32))"
+2026-03-30 11:46:45 - app.main - INFO - Application started - env=development, log_level=INFO, whatsapp_send=disabled
+2026-03-30 11:46:48 - interfaces.middleware - INFO - request_start
+2026-03-30 11:46:48 - interfaces.middleware - INFO - request_end
+INFO:     127.0.0.1:54646 - "GET /health HTTP/1.1" 200 OK
+2026-03-30 11:47:01 - interfaces.middleware - INFO - request_start
+2026-03-30 11:47:01 - interfaces.middleware - INFO - request_end
+INFO:     127.0.0.1:54647 - "GET /health HTTP/1.1" 200 OK

@@ -1,0 +1,6 @@
+{
+  "hooks": {
+    "onSessionStart": ".claude/hooks/prompt-start.sh",
+    "onPromptSubmit": ".claude/hooks/prompt-start.sh"
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "ef886353-6ec2-4070-8566-679eab09d75e": {
+    "id": "ef886353-6ec2-4070-8566-679eab09d75e",
+    "event_type": "message.received",
+    "aggregate_id": "49f96b47-1555-46a8-a2bd-a940b59f9f3a",
+    "aggregate_type": "Conversation",
+    "payload": {
+      "session_id": "test-session",
+      "external_message_id": "1da1cf66-b146-40b6-9702-45d1399d2f23"
+    },
+    "trace_id": "bb718c1c-4acf-4b8a-8e13-a4173c552832",
+    "correlation_id": null,
+    "lead_id": "9c1e2b15-0f0d-48a3-9867-fc0b4c49ceaf",
+    "conversation_id": "49f96b47-1555-46a8-a2bd-a940b59f9f3a",
+    "channel": "web",
+    "occurred_at": "2026-03-30T14:46:28.775483",
+    "published_at": null,
+    "schema_version": "1.0"
+  },
+  "8fe77ec6-9109-4386-baa6-9258e0a5a0b1": {
+    "id": "8fe77ec6-9109-4386-baa6-9258e0a5a0b1",
+    "event_type": "message.received",
+    "aggregate_id": "c569620a-1b4f-443a-89ea-fa3b2a0f1693",
+    "aggregate_type": "Conversation",
+    "payload": {
+      "session_id": "sid-1",
+      "external_message_id": "46cf799d-52d6-45ce-a2c5-e706d0964dc4"
+    },
+    "trace_id": "81c42bf0-ffce-4549-9789-e17823f93be5",
+    "correlation_id": null,
+    "lead_id": "edaaa22e-8c7b-48b8-9599-777483a7e41a",
+    "conversation_id": "c569620a-1b4f-443a-89ea-fa3b2a0f1693",
+    "channel": "unknown",
+    "occurred_at": "2026-03-30T14:46:30.135533",
+    "published_at": null,
+    "schema_version": "1.0"
+  },
+  "1127e7eb-c801-4e5a-a27c-a817a9a54064": {
+    "id": "1127e7eb-c801-4e5a-a27c-a817a9a54064",
+    "event_type": "message.received",
+    "aggregate_id": "49f96b47-1555-46a8-a2bd-a940b59f9f3a",
+    "aggregate_type": "Conversation",
+    "payload": {
+      "session_id": "test-session",
+      "external_message_id": "300a4b05-05e0-409a-a6d5-f623cf6f75ed"
+    },
+    "trace_id": "02113027-67f4-457d-9aad-6fc977e3551d",
+    "correlation_id": null,
+    "lead_id": "9c1e2b15-0f0d-48a3-9867-fc0b4c49ceaf",
+    "conversation_id": "49f96b47-1555-46a8-a2bd-a940b59f9f3a",
+    "channel": "web",
+    "occurred_at": "2026-03-30T14:50:53.848545",
+    "published_at": null,
+    "schema_version": "1.0"
+  },
+  "d9606d06-b6fb-4909-836a-453e95825d86": {
+    "id": "d9606d06-b6fb-4909-836a-453e95825d86",
+    "event_type": "message.received",
+    "aggregate_id": "49f96b47-1555-46a8-a2bd-a940b59f9f3a",
+    "aggregate_type": "Conversation",
+    "payload": {
+      "session_id": "test-session",
+      "external_message_id": "81591e29-5545-4e51-95e2-2535dbbb7474"
+    },
+    "trace_id": "fdc91212-1b6c-4e74-a4c5-ba28701b5e99",
+    "correlation_id": null,
+    "lead_id": "9c1e2b15-0f0d-48a3-9867-fc0b4c49ceaf",
+    "conversation_id": "49f96b47-1555-46a8-a2bd-a940b59f9f3a",
+    "channel": "web",
+    "occurred_at": "2026-03-30T14:53:21.401220",
+    "published_at": null,
+    "schema_version": "1.0"
+  },
+  "8132b92d-90f9-4124-964f-7c1d7e5c0fd5": {
+    "id": "8132b92d-90f9-4124-964f-7c1d7e5c0fd5",
+    "event_type": "message.received",
+    "aggregate_id": "49f96b47-1555-46a8-a2bd-a940b59f9f3a",
+    "aggregate_type": "Conversation",
+    "payload": {
+      "session_id": "test-session",
+      "external_message_id": "99dcb60f-f240-47e4-a57a-bfaff7a28aff"
+    },
+    "trace_id": "ef1856c5-8478-4e18-8223-f57b02e4cb65",
+    "correlation_id": null,
+    "lead_id": "9c1e2b15-0f0d-48a3-9867-fc0b4c49ceaf",
+    "conversation_id": "49f96b47-1555-46a8-a2bd-a940b59f9f3a",
+    "channel": "web",
+    "occurred_at": "2026-03-30T14:55:05.301110",
+    "published_at": null,
+    "schema_version": "1.0"
+  }
+}
