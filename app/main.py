@@ -1,4 +1,3 @@
-import logging
 import os
 import secrets
 from datetime import datetime
@@ -16,9 +15,14 @@ from slowapi.util import get_remote_address
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from agent.runtime import handle_message
+from application.bootstrap import process_phase34_message
+from application.conversation_orchestrator import MessageInput
+from domain.enums import Channel
 from app.db import init_db
 from core.config import settings
 from core.logging import setup_logging
+from core.trace import get_logger, set_trace_context
+from interfaces.middleware import TraceMiddleware
 from routes.contato import router as contato_router
 from routes.imoveis import router as imoveis_router
 from routes.whatsapp import router as whatsapp_router
@@ -26,7 +30,7 @@ from routes.whatsapp import router as whatsapp_router
 load_dotenv(override=True)
 
 setup_logging()
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 limiter = Limiter(key_func=get_remote_address)
 
@@ -52,6 +56,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Middleware de rastreabilidade — injeta trace_id/request_id em todos os requests
+app.add_middleware(TraceMiddleware)
 
 
 class SPAStaticFiles(StaticFiles):
@@ -189,15 +196,43 @@ async def _startup():
 @app.post("/webhook", dependencies=[Depends(verify_api_key)])
 @limiter.limit("30/minute")
 async def webhook(body: WebhookRequest, request: Request):
-    correlation_id = os.urandom(8).hex()
-    request.state.correlation_id = correlation_id
+    # Enriquece contexto de trace com IDs de sessão (já iniciado pelo TraceMiddleware)
+    trace_id = getattr(request.state, "trace_id", None)
+    set_trace_context(
+        trace_id=trace_id,
+        lead_id=body.session_id,
+        channel="web",
+    )
     session_short = body.session_id[:8]
 
-    logger.info("USER [%s] %s (correlation=%s)", session_short, body.message[:300], correlation_id)
+    logger.info(
+        "webhook_user_message",
+        extra={"session_short": session_short, "message_preview": body.message[:300]},
+    )
 
-    result = handle_message(body.session_id, body.message, name=body.name, correlation_id=correlation_id)
+    try:
+        result = process_phase34_message(
+            MessageInput(
+                session_id=body.session_id,
+                message_text=body.message,
+                sender_name=body.name,
+                trace_id=trace_id,
+                channel=Channel.WEB,
+            )
+        )
+    except Exception:
+        logger.exception("webhook_phase34_failed fallback=runtime")
+        result = handle_message(
+            body.session_id,
+            body.message,
+            name=body.name,
+            correlation_id=trace_id,
+        )
     if isinstance(result, dict) and "reply" in result:
-        logger.info("AGENT [%s] %s (correlation=%s)", session_short, result["reply"][:300], correlation_id)
+        logger.info(
+            "webhook_agent_reply",
+            extra={"session_short": session_short, "reply_preview": result["reply"][:300]},
+        )
         return {"reply": result["reply"]}
     return result
 
