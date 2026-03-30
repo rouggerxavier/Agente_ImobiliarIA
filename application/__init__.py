@@ -5,6 +5,7 @@ Uso:
     from application.conversation_orchestrator import ConversationOrchestrator, MessageInput, OrchestratorResult
     from application.crm import CRMService, HandoffContext
     from application.catalog import CatalogService, SearchFilters, PropertyMatch
+    from application.catalog_ingestion import CatalogIngestionService, IngestionReport
     from application.knowledge import KnowledgeService, KnowledgeResult
 """
 
@@ -15,6 +16,7 @@ from application.conversation_orchestrator import (
 )
 from application.crm import CRMService, HandoffContext
 from application.catalog import CatalogService, SearchFilters, PropertyMatch
+from application.catalog_ingestion import CatalogIngestionService, IngestionReport
 from application.knowledge import KnowledgeService, KnowledgeResult, DocumentInput
 
 __all__ = [
@@ -29,6 +31,8 @@ __all__ = [
     "CatalogService",
     "SearchFilters",
     "PropertyMatch",
+    "CatalogIngestionService",
+    "IngestionReport",
     # M4 - Conhecimento
     "KnowledgeService",
     "KnowledgeResult",

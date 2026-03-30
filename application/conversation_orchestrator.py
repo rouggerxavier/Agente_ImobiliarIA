@@ -93,6 +93,7 @@ class OrchestratorGraphState:
     detected_intent: DetectedIntent = DetectedIntent.UNKNOWN
     retrieval_context: List[str] = field(default_factory=list)
     property_candidates: List[str] = field(default_factory=list)
+    property_recommendations: List[Dict[str, Any]] = field(default_factory=list)
     lead_score: int = 0
     routing_decision: Optional[str] = None
     next_action: NextAction = NextAction.ASK_MISSING_FIELD
@@ -106,6 +107,7 @@ class OrchestratorGraphState:
     latest_user_message: Optional[Message] = None
     latest_assistant_message: Optional[Message] = None
     knowledge_sources: List[str] = field(default_factory=list)
+    catalog_reply: str = ""
     node_metrics: Dict[str, int] = field(default_factory=dict)
     execution_cost_usd: float = 0.0
 
@@ -348,8 +350,18 @@ class ConversationOrchestrator:
             return
         if graph_state.detected_intent not in {DetectedIntent.BUY, DetectedIntent.RENT}:
             return
-        matches = self._catalog.recommend(lead, limit=3)
+        if not self._catalog.can_recommend(lead):
+            return
+        matches = self._catalog.recommend(lead, conversation_id=conversation.id, limit=3)
         graph_state.property_candidates = [match.property.external_ref or match.property.id for match in matches]
+        graph_state.property_recommendations = self._catalog.serialize_matches(
+            matches,
+            lead.preferences.intent.value if lead.preferences.intent else None,
+        )
+        if matches:
+            graph_state.catalog_reply = self._catalog.build_recommendation_reply(matches, lead)
+        else:
+            graph_state.catalog_reply = self._catalog.fallback_message(self._catalog.build_filters_for_lead(lead, limit=3))
 
     def _node_decide_and_respond(self, lead: Lead, conversation: Conversation, graph_state: OrchestratorGraphState) -> None:
         if graph_state.execution_cost_usd > EXECUTION_COST_LIMIT_USD:
@@ -362,6 +374,11 @@ class ConversationOrchestrator:
             name=graph_state.message_input.sender_name,
             correlation_id=graph_state.trace_id,
         )
+        if graph_state.property_recommendations and not payload.get("properties"):
+            payload["properties"] = graph_state.property_recommendations
+            payload["reply"] = self._merge_catalog_reply(payload.get("reply", ""), graph_state.catalog_reply)
+        elif graph_state.catalog_reply and not payload.get("properties"):
+            payload["reply"] = self._merge_catalog_reply(payload.get("reply", ""), graph_state.catalog_reply)
         graph_state.legacy_payload = payload
         graph_state.reply = payload.get("reply", "")
 
@@ -601,6 +618,17 @@ class ConversationOrchestrator:
             payload={"reply": "", "duplicate": True},
             debug={"duplicate": True},
         )
+
+    def _merge_catalog_reply(self, base_reply: str, catalog_reply: str) -> str:
+        base = (base_reply or "").strip()
+        catalog = (catalog_reply or "").strip()
+        if not catalog:
+            return base
+        if not base:
+            return catalog
+        if catalog in base:
+            return base
+        return f"{base}\n\n{catalog}"
 
     def _build_context_window(self, messages: List[Message], summary: ConversationSummary) -> List[str]:
         window: List[str] = []

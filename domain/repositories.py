@@ -127,7 +127,7 @@ class PropertyRepository(ABC):
         bedrooms_min: Optional[int] = None,
         budget_max: Optional[int] = None,
         budget_min: Optional[int] = None,
-        status: PropertyStatus = PropertyStatus.AVAILABLE,
+        status: Optional[PropertyStatus] = PropertyStatus.AVAILABLE,
         limit: int = 10,
         order_by: str = "relevance",  # "relevance" | "price_asc" | "price_desc" | "newest"
     ) -> List[Property]:

@@ -20,7 +20,7 @@ def get_phase34_runtime() -> dict:
         return _runtime
 
     repos = create_persistent_repos()
-    catalog = CatalogService(repos["properties"])
+    catalog = CatalogService(repos["properties"], repos["recommendations"])
     knowledge = KnowledgeService(legacy_kb=legacy_kb)
     crm = CRMService(repos["leads"], repos["brokers"], repos["assignments"])
     orchestrator = ConversationOrchestrator(

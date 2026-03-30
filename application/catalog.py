@@ -11,7 +11,7 @@ Casos de uso:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from domain.entities import Lead, Property, Recommendation
 from domain.enums import PropertyPurpose, PropertyStatus, PropertyType
@@ -79,6 +79,69 @@ class CatalogService:
         self._semantic.rebuild_index(all_props)
         self._semantic_ready = True
         logger.info("semantic_index_built", extra={"size": self._semantic.index_size})
+
+    def build_filters_for_lead(self, lead: Lead, limit: int = 5) -> SearchFilters:
+        pref = lead.preferences
+        return SearchFilters(
+            city=pref.city,
+            neighborhood=pref.neighborhood,
+            purpose=self._target_purpose_for_lead(lead),
+            property_type=pref.property_type,
+            bedrooms_min=pref.bedrooms_min,
+            budget_max=pref.budget_max,
+            budget_min=pref.budget_min,
+            furnished=pref.furnished,
+            pet_friendly=pref.pet_friendly,
+            allows_short_term_rental=pref.allows_short_term_rental,
+            condo_max=pref.condo_max,
+            limit=limit,
+        )
+
+    def can_recommend(self, lead: Lead) -> bool:
+        pref = lead.preferences
+        has_location = bool(pref.city or pref.neighborhood)
+        has_budget = pref.budget_max is not None and pref.budget_max > 0
+        has_type = pref.property_type is not None
+        return bool(pref.intent and has_location and has_budget and has_type)
+
+    def serialize_matches(self, matches: List[PropertyMatch], intent: Optional[str] = None) -> List[Dict[str, Any]]:
+        serialized: List[Dict[str, Any]] = []
+        for match in matches:
+            prop = match.property
+            serialized.append(
+                {
+                    "id": prop.external_ref or prop.id,
+                    "property_id": prop.id,
+                    "external_ref": prop.external_ref,
+                    "titulo": prop.highlights[0] if prop.highlights else f"{prop.property_type.value.title()} em {prop.neighborhood}",
+                    "bairro": prop.neighborhood,
+                    "cidade": prop.city,
+                    "quartos": prop.bedrooms,
+                    "suites": prop.suites,
+                    "banheiros": prop.bathrooms,
+                    "vagas": prop.parking,
+                    "area_m2": prop.area_m2,
+                    "preco_venda": prop.price,
+                    "preco_aluguel": prop.rent_price,
+                    "descricao_curta": match.sales_pitch,
+                    "match_score": match.match_score,
+                    "match_reasons": list(match.match_reasons),
+                    "purpose": prop.purpose.value,
+                    "intent": intent,
+                }
+            )
+        return serialized
+
+    def build_recommendation_reply(self, matches: List[PropertyMatch], lead: Lead) -> str:
+        if not matches:
+            return self.fallback_message(self.build_filters_for_lead(lead, limit=3))
+
+        label = "compra" if self._target_purpose_for_lead(lead) == PropertyPurpose.SALE else "locação"
+        lines = [f"Encontrei estas opções para {label}:"]
+        for idx, match in enumerate(matches[:3], start=1):
+            lines.append(f"{idx}. {match.sales_pitch}")
+        lines.append("Se quiser, eu também posso refinar por bairro, orçamento ou tipologia.")
+        return "\n".join(lines)
 
     # ─────────────────────────────────────────────────────────────────────────
     # Busca estruturada
@@ -185,26 +248,7 @@ class CatalogService:
         - Persiste as recomendações no RecommendationRepository se disponível.
         - Garante que imóvel incompatível com perfil seja sinalizado.
         """
-        pref = lead.preferences
-
-        purpose = PropertyPurpose.SALE
-        if pref.intent and pref.intent.value in ("alugar",):
-            purpose = PropertyPurpose.RENT
-
-        filters = SearchFilters(
-            city=pref.city,
-            neighborhood=pref.neighborhood,
-            purpose=purpose,
-            property_type=pref.property_type,
-            bedrooms_min=pref.bedrooms_min,
-            budget_max=pref.budget_max,
-            budget_min=pref.budget_min,
-            furnished=pref.furnished,
-            pet_friendly=pref.pet_friendly,
-            allows_short_term_rental=pref.allows_short_term_rental,
-            condo_max=pref.condo_max,
-            limit=limit * 4,
-        )
+        filters = self.build_filters_for_lead(lead, limit=limit * 4)
 
         candidates = self.search(filters)
         is_alternative = False
@@ -219,7 +263,7 @@ class CatalogService:
         # Calcula score e filtra imóveis incompatíveis antes de rankar
         matches = []
         for p in candidates:
-            incompatibilities = self._check_incompatibilities(lead, p)
+            incompatibilities = self._check_incompatibilities(lead, p, filters.purpose)
             if incompatibilities and not is_alternative:
                 # Imóvel incompatível com critério essencial — pula
                 logger.debug(
@@ -227,7 +271,7 @@ class CatalogService:
                     extra={"property_id": p.id, "reasons": incompatibilities},
                 )
                 continue
-            match = self._score_match(lead, p)
+            match = self._score_match(lead, p, filters.purpose)
             if is_alternative:
                 match.match_reasons.insert(0, "Alternativa próxima ao seu perfil")
             matches.append(match)
@@ -262,7 +306,7 @@ class CatalogService:
         )
         return matches[:limit]
 
-    def _check_incompatibilities(self, lead: Lead, prop: Property) -> List[str]:
+    def _check_incompatibilities(self, lead: Lead, prop: Property, purpose: Optional[PropertyPurpose]) -> List[str]:
         """
         Verifica se o imóvel é incompatível com critérios essenciais do lead.
         Retorna lista de incompatibilidades; vazia = compatível.
@@ -275,7 +319,7 @@ class CatalogService:
             issues.append(f"Imóvel com status {prop.status.value}")
 
         # Orçamento estourado por mais de 20% (tolerância de 20%)
-        price = prop.price or prop.rent_price or 0
+        price = self._price_for_property(prop, purpose)
         if pref.budget_max and price and price > pref.budget_max * 1.20:
             issues.append(
                 f"Preço R$ {price:,.0f} acima do orçamento R$ {pref.budget_max:,.0f}".replace(",", ".")
@@ -332,7 +376,7 @@ class CatalogService:
 
         return [], False
 
-    def _score_match(self, lead: Lead, prop: Property) -> PropertyMatch:
+    def _score_match(self, lead: Lead, prop: Property, purpose: Optional[PropertyPurpose]) -> PropertyMatch:
         """
         Calcula score de compatibilidade entre lead e imóvel.
         Retorna PropertyMatch com score 0.0–1.0 e razões.
@@ -344,7 +388,7 @@ class CatalogService:
 
         # Orçamento (peso 30%)
         max_score += 0.30
-        price = prop.price or prop.rent_price or 0
+        price = self._price_for_property(prop, purpose)
         if pref.budget_max and price:
             if price <= pref.budget_max:
                 ratio = price / pref.budget_max
@@ -397,7 +441,7 @@ class CatalogService:
         normalized = score / max_score if max_score > 0 else 0.0
 
         # Pitch de venda básico — será enriquecido com LLM na Fase 5
-        pitch = self._build_pitch(prop, reasons)
+        pitch = self._build_pitch(prop, reasons, purpose)
 
         return PropertyMatch(
             property=prop,
@@ -406,7 +450,7 @@ class CatalogService:
             sales_pitch=pitch,
         )
 
-    def _build_pitch(self, prop: Property, reasons: List[str]) -> str:
+    def _build_pitch(self, prop: Property, reasons: List[str], purpose: Optional[PropertyPurpose]) -> str:
         """
         Gera pitch de venda orientado a conversão.
         Destaca diferenciais relevantes para o lead.
@@ -422,9 +466,9 @@ class CatalogService:
         if prop.city:
             parts.append(f"em {prop.city}")
 
-        price = prop.price or prop.rent_price
+        price = self._price_for_property(prop, purpose)
         if price:
-            label = "Aluguel" if prop.rent_price and not prop.price else "Venda"
+            label = "Aluguel" if purpose == PropertyPurpose.RENT else "Venda"
             parts.append(f"{label}: R$ {price:,.0f}".replace(",", "."))
 
         # Destaques de amenidades
@@ -452,6 +496,17 @@ class CatalogService:
             if compat:
                 desc += f". Atende: {compat}."
         return desc
+
+    def _target_purpose_for_lead(self, lead: Lead) -> PropertyPurpose:
+        intent = lead.preferences.intent.value if lead.preferences.intent else ""
+        return PropertyPurpose.RENT if intent == "alugar" else PropertyPurpose.SALE
+
+    def _price_for_property(self, prop: Property, purpose: Optional[PropertyPurpose]) -> int:
+        if purpose == PropertyPurpose.RENT:
+            return prop.rent_price or prop.price or 0
+        if purpose == PropertyPurpose.SALE:
+            return prop.price or prop.rent_price or 0
+        return prop.price or prop.rent_price or 0
 
     # ─────────────────────────────────────────────────────────────────────────
     # Ingestão

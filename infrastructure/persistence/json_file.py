@@ -79,6 +79,57 @@ def _load_json(path: Path) -> Dict[str, Any]:
         return {}
 
 
+def _first_present(*values: Any) -> Any:
+    for value in values:
+        if value is not None and value != "":
+            return value
+    return None
+
+
+def _to_float(value: Any) -> Optional[float]:
+    if value in (None, "", "null"):
+        return None
+    try:
+        if isinstance(value, bool):
+            return float(int(value))
+        if isinstance(value, (int, float)):
+            return float(value)
+        normalized = str(value).strip()
+        normalized = normalized.replace("R$", "").replace("r$", "").replace(" ", "")
+        normalized = normalized.replace("\u00A0", "")
+        if "," in normalized and "." in normalized:
+            normalized = normalized.replace(".", "").replace(",", ".")
+        elif "," in normalized:
+            normalized = normalized.replace(".", "").replace(",", ".")
+        elif normalized.count(".") > 1:
+            normalized = normalized.replace(".", "")
+        elif normalized.count(".") == 1:
+            left, right = normalized.split(".")
+            if right.isdigit() and len(right) == 3:
+                normalized = left + right
+        return float(normalized)
+    except (TypeError, ValueError):
+        return None
+
+
+def _to_int(value: Any) -> Optional[int]:
+    number = _to_float(value)
+    return int(round(number)) if number is not None else None
+
+
+def _to_bool(value: Any) -> Optional[bool]:
+    if value is None or value == "":
+        return None
+    if isinstance(value, bool):
+        return value
+    normalized = str(value).strip().lower()
+    if normalized in {"true", "1", "sim", "yes", "y"}:
+        return True
+    if normalized in {"false", "0", "nao", "não", "no", "n"}:
+        return False
+    return None
+
+
 def _atomic_write(path: Path, payload: Dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temp = path.with_suffix(path.suffix + ".tmp")
@@ -379,8 +430,8 @@ def _map_property_type(raw_value: Any) -> PropertyType:
 
 
 def _map_property_purpose(item: Dict[str, Any]) -> PropertyPurpose:
-    sale_price = int(item.get("preco_venda") or 0)
-    rent_price = int(item.get("preco_aluguel") or 0)
+    sale_price = _to_int(item.get("preco_venda")) or 0
+    rent_price = _to_int(item.get("preco_aluguel")) or 0
     if sale_price and rent_price:
         return PropertyPurpose.BOTH
     if sale_price:
@@ -397,16 +448,19 @@ def _load_property_repo() -> PropertyRepository:
             neighborhood=str(item.get("bairro") or ""),
             property_type=_map_property_type(item.get("tipo")),
             purpose=_map_property_purpose(item),
-            area_m2=item.get("area_m2"),
-            bedrooms=item.get("quartos"),
-            parking=item.get("vagas"),
-            price=item.get("preco_venda") or None,
-            rent_price=item.get("preco_aluguel") or None,
-            condo_fee=item.get("condominio") or None,
-            iptu_annual=item.get("iptu") or None,
-            furnished=item.get("mobiliado"),
-            pet_friendly=item.get("aceita_pet"),
-            description=item.get("descricao_curta"),
+            area_m2=_to_float(item.get("area_m2")),
+            bedrooms=_to_int(item.get("quartos")),
+            suites=_to_int(item.get("suites")),
+            bathrooms=_to_int(_first_present(item.get("banheiros"), item.get("bathrooms"))),
+            parking=_to_int(item.get("vagas")),
+            price=_to_int(item.get("preco_venda")),
+            rent_price=_to_int(item.get("preco_aluguel")),
+            condo_fee=_to_int(item.get("condominio")),
+            iptu_annual=_to_int(item.get("iptu")),
+            furnished=_to_bool(item.get("mobiliado")),
+            pet_friendly=_to_bool(item.get("aceita_pet")),
+            allows_short_term_rental=_to_bool(item.get("permite_temporada")),
+            description=item.get("descricao") or item.get("descricao_curta"),
             highlights=[item.get("titulo")] if item.get("titulo") else [],
             status=PropertyStatus.AVAILABLE,
         )

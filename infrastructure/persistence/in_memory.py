@@ -159,25 +159,25 @@ class InMemoryPropertyRepository(PropertyRepository):
         bedrooms_min: Optional[int] = None,
         budget_max: Optional[int] = None,
         budget_min: Optional[int] = None,
-        status: PropertyStatus = PropertyStatus.AVAILABLE,
+        status: Optional[PropertyStatus] = PropertyStatus.AVAILABLE,
         limit: int = 10,
         order_by: str = "relevance",
     ) -> List[Property]:
         results = []
         for p in self._store.values():
-            if p.status != status:
+            if status is not None and p.status != status:
                 continue
             if city and city.lower() not in p.city.lower():
                 continue
             if neighborhood and neighborhood.lower() not in p.neighborhood.lower():
                 continue
-            if purpose and p.purpose != purpose:
+            if purpose and not self._matches_purpose(p.purpose, purpose):
                 continue
             if property_type and p.property_type != property_type:
                 continue
             if bedrooms_min and p.bedrooms and p.bedrooms < bedrooms_min:
                 continue
-            price = p.price or p.rent_price or 0
+            price = self._price_for_purpose(p, purpose)
             if budget_max and price > budget_max:
                 continue
             if budget_min and price < budget_min:
@@ -190,8 +190,23 @@ class InMemoryPropertyRepository(PropertyRepository):
             budget_max=budget_max,
             bedrooms_min=bedrooms_min,
             neighborhood=neighborhood,
+            purpose=purpose,
         )
         return results[:limit]
+
+    @staticmethod
+    def _matches_purpose(property_purpose: PropertyPurpose, requested_purpose: PropertyPurpose) -> bool:
+        if requested_purpose == PropertyPurpose.BOTH:
+            return property_purpose == PropertyPurpose.BOTH
+        return property_purpose in {requested_purpose, PropertyPurpose.BOTH}
+
+    @staticmethod
+    def _price_for_purpose(property: Property, purpose: Optional[PropertyPurpose]) -> int:
+        if purpose == PropertyPurpose.RENT:
+            return property.rent_price or property.price or 0
+        if purpose == PropertyPurpose.SALE:
+            return property.price or property.rent_price or 0
+        return property.price or property.rent_price or 0
 
     def _sort_results(
         self,
@@ -200,11 +215,12 @@ class InMemoryPropertyRepository(PropertyRepository):
         budget_max: Optional[int] = None,
         bedrooms_min: Optional[int] = None,
         neighborhood: Optional[str] = None,
+        purpose: Optional[PropertyPurpose] = None,
     ) -> List[Property]:
         if order_by == "price_asc":
-            return sorted(results, key=lambda p: (p.price or p.rent_price or 0))
+            return sorted(results, key=lambda p: self._price_for_purpose(p, purpose))
         if order_by == "price_desc":
-            return sorted(results, key=lambda p: (p.price or p.rent_price or 0), reverse=True)
+            return sorted(results, key=lambda p: self._price_for_purpose(p, purpose), reverse=True)
         if order_by == "newest":
             return sorted(results, key=lambda p: p.created_at, reverse=True)
         # relevance — pontuação composta
@@ -216,7 +232,7 @@ class InMemoryPropertyRepository(PropertyRepository):
             elif neighborhood and p.neighborhood and neighborhood.lower() in p.neighborhood.lower():
                 score += 1.5
             # Preço próximo ao limite máximo (uso do orçamento ideal)
-            price = p.price or p.rent_price or 0
+            price = self._price_for_purpose(p, purpose)
             if budget_max and price:
                 ratio = price / budget_max
                 if 0.6 <= ratio <= 1.0:
