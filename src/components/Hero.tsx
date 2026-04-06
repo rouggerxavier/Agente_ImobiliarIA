@@ -1,28 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, MapPin } from "lucide-react";
 
 const slides = [
-  {
-    url: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1920&q=85",
-    alt: "Prédio moderno de luxo ao entardecer",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1920&q=85",
-    alt: "Edifício residencial contemporâneo",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1920&q=85",
-    alt: "Casa moderna com piscina",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1920&q=85",
-    alt: "Condomínio de alto padrão",
-  },
-  {
-    url: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920&q=85",
-    alt: "Fachada de apartamento luxuoso",
-  },
+  { url: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1920&q=85", alt: "Villa de luxo moderna ao entardecer com piscina e vista para o mar" },
+  { url: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1920&q=85", alt: "Edifício residencial contemporâneo de alto padrão" },
+  { url: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1920&q=85", alt: "Casa moderna com piscina e jardim curado" },
+  { url: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1920&q=85", alt: "Condomínio de alto padrão com área de lazer" },
+  { url: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920&q=85", alt: "Fachada de apartamento luxuoso com varanda" },
 ];
 
 const INTERVAL_MS = 10000;
@@ -33,13 +18,8 @@ const Hero = () => {
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
 
-  const next = useCallback(() => {
-    setCurrent((c) => (c + 1) % slides.length);
-  }, []);
-
-  const prev = useCallback(() => {
-    setCurrent((c) => (c - 1 + slides.length) % slides.length);
-  }, []);
+  const next = useCallback(() => { setCurrent((c) => (c + 1) % slides.length); }, []);
+  const prev = useCallback(() => { setCurrent((c) => (c - 1 + slides.length) % slides.length); }, []);
 
   useEffect(() => {
     const timer = setInterval(next, INTERVAL_MS);
@@ -56,101 +36,82 @@ const Hero = () => {
     if (e.key === "Enter") handleSearch();
   };
 
-  const hasQuery = query.trim().length > 0;
-
   return (
-    <section id="inicio" className="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
+    <header className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      {/* Slideshow */}
       {slides.map((slide, i) => (
-        <img
-          key={slide.url}
-          src={slide.url}
-          alt={slide.alt}
+        <img key={slide.url} src={slide.url} alt={slide.alt}
           className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000"
           style={{ opacity: i === current ? 1 : 0 }}
-          loading={i === 0 ? "eager" : "lazy"}
-        />
+          loading={i === 0 ? "eager" : "lazy"} />
       ))}
+      {/* Overlays */}
+      <div className="absolute inset-0 bg-primary-dark/40 mix-blend-multiply" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary-dark/20 to-primary-dark/80" />
 
-      <div className="absolute inset-0" style={{ background: "var(--gradient-hero)" }} />
-
-      <button
-        type="button"
-        onClick={prev}
-        aria-label="Foto anterior"
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-11 h-11 rounded-full bg-black/40 text-white hover:bg-black/65 transition-colors backdrop-blur-sm border border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black/40"
-      >
+      {/* Prev/Next */}
+      <button type="button" onClick={prev} aria-label="Foto anterior"
+        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-11 h-11 rounded-full bg-black/40 text-white hover:bg-black/65 transition-colors backdrop-blur-sm border border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
         <ChevronLeft className="h-6 w-6" />
       </button>
-
-      <button
-        type="button"
-        onClick={next}
-        aria-label="Próxima foto"
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-11 h-11 rounded-full bg-black/40 text-white hover:bg-black/65 transition-colors backdrop-blur-sm border border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black/40"
-      >
+      <button type="button" onClick={next} aria-label="Próxima foto"
+        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-11 h-11 rounded-full bg-black/40 text-white hover:bg-black/65 transition-colors backdrop-blur-sm border border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
         <ChevronRight className="h-6 w-6" />
       </button>
 
+      {/* Dots */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-1">
         {slides.map((_, i) => {
           const active = i === current;
           return (
-            <button
-              key={i}
-              type="button"
-              onClick={() => setCurrent(i)}
-              aria-label={`Ir para foto ${i + 1}`}
-              aria-current={active ? "true" : "false"}
-              className="hero-slide-button"
-            >
-              <span
-                className={`h-1.5 rounded-full transition-all duration-300 ${active ? "w-6 bg-white" : "w-1.5 bg-white/50"}`}
-              />
+            <button key={i} type="button" onClick={() => setCurrent(i)}
+              aria-label={`Ir para foto ${i + 1}`} aria-current={active ? "true" : "false"}
+              className="flex h-11 w-11 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+              <span className={`h-1.5 rounded-full transition-all duration-300 ${active ? "w-6 bg-white" : "w-1.5 bg-white/50"}`} />
             </button>
           );
         })}
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 text-center">
-        <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-primary-foreground mb-6 opacity-0 animate-fade-in-up">
-          Encontre o imóvel <br />
-          <span className="text-gradient">dos seus sonhos</span>
+      {/* Content */}
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-8 md:px-16 pt-24 text-center md:text-left">
+        <div className="inline-block bg-tertiary-fixed-dim/20 backdrop-blur-md px-4 py-1 rounded-full mb-6 border border-tertiary-fixed-dim/30">
+          <span className="text-tertiary-fixed text-xs uppercase tracking-[0.2em] font-bold">Excelência em Curadoria</span>
+        </div>
+        <h1 className="text-5xl md:text-8xl font-headline font-bold text-white mb-6 leading-[1.1] tracking-tight max-w-4xl">
+          Elevando sua <br /><span className="text-tertiary-fixed">Experiência</span> Imobiliária.
         </h1>
-        <p
-          className="font-body text-primary-foreground/80 text-lg md:text-xl max-w-2xl mx-auto mb-10 opacity-0 animate-fade-in-up"
-          style={{ animationDelay: "0.15s" }}
-        >
-          Apartamentos, casas e coberturas nas melhores localizações. Experiência premium em cada detalhe.
+        <p className="text-lg md:text-2xl text-slate-200 mb-12 max-w-2xl font-light leading-relaxed">
+          Descubra imóveis extraordinários que redefinem o bem viver. Curadoria das melhores arquiteturas em Copacabana e no Rio.
         </p>
 
-        <div
-          className="max-w-xl mx-auto bg-card/95 backdrop-blur-sm rounded-full flex items-center shadow-card p-1.5 opacity-0 animate-fade-in-up"
-          style={{ animationDelay: "0.3s" }}
-        >
-          <label htmlFor={HERO_SEARCH_INPUT_ID} className="sr-only">
-            Buscar imóveis por bairro, cidade ou tipo
-          </label>
-          <input
-            id={HERO_SEARCH_INPUT_ID}
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Buscar por bairro, cidade ou tipo..."
-            className="flex-1 bg-transparent px-5 py-3 font-body text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
-          />
-          <button
-            type="button"
-            onClick={handleSearch}
-            disabled={!hasQuery}
-            className="bg-accent text-accent-foreground rounded-full p-3 hover:opacity-90 transition-opacity disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-foreground/60"
-            aria-label="Pesquisar imóveis"
-          >
-            <Search className="h-5 w-5" />
+        {/* Search Bar */}
+        <div className="w-full max-w-4xl bg-white/90 backdrop-blur-2xl p-4 md:p-2 rounded-xl shadow-2xl flex flex-col md:flex-row items-stretch md:items-center gap-2">
+          <div className="flex-1 flex items-center gap-3 p-4">
+            <MapPin className="h-5 w-5 text-tertiary-fixed-dim shrink-0" />
+            <div className="flex flex-col flex-1">
+              <label htmlFor={HERO_SEARCH_INPUT_ID} className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold mb-1">
+                Buscar imóvel
+              </label>
+              <input
+                id={HERO_SEARCH_INPUT_ID}
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Bairro, cidade ou tipo..."
+                className="bg-transparent border-none focus:ring-0 w-full text-on-surface p-0 font-medium text-sm focus:outline-none"
+              />
+            </div>
+          </div>
+          <button type="button" onClick={handleSearch}
+            className="bg-primary-dark text-white h-full px-10 py-5 rounded-lg font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 hover:bg-primary-dark/90 transition-all">
+            <Search className="h-4 w-4" />
+            Buscar
           </button>
         </div>
       </div>
-    </section>
+    </header>
   );
 };
 

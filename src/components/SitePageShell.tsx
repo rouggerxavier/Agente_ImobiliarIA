@@ -14,7 +14,7 @@ const SitePageShell = ({ hero, children, mainClassName = "flex-1" }: SitePageShe
   return (
     <div className={SITE_PAGE_CLASS}>
       <Navbar />
-      {hero}
+      <div className="pt-[var(--navbar-offset)]">{hero}</div>
       <main className={mainClassName}>{children}</main>
     </div>
   );

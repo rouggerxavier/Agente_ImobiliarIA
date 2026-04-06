@@ -16,6 +16,7 @@ export default {
       fontFamily: {
         display: ['Playfair Display', 'serif'],
         body: ['DM Sans', 'sans-serif'],
+        headline: ['Noto Serif', 'serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -51,6 +52,20 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        'primary-dark': '#00152a',
+        'primary-container': '#102a43',
+        'tertiary-fixed': '#ffdf9a',
+        'tertiary-fixed-dim': '#ebc15f',
+        'surface-base': '#f8f9ff',
+        'on-surface': '#011d35',
+        'on-surface-variant': '#43474d',
+        'surface-container-lowest': '#ffffff',
+        'surface-container-low': '#eef4ff',
+        'surface-container': '#e4efff',
+        'surface-container-high': '#dbe9ff',
+        'on-primary-container': '#7a92b0',
+        'outline-variant': '#c3c6ce',
+        'on-tertiary-fixed': '#251a00',
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

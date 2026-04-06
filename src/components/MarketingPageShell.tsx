@@ -12,7 +12,7 @@ type MarketingPageShellProps = {
 };
 
 const PAGE_SHELL_CLASS = "min-h-screen flex flex-col bg-[hsl(38_35%_92%)]";
-const HERO_CLASS = "w-full pt-16 relative overflow-hidden";
+const HERO_CLASS = "w-full pt-[var(--navbar-offset)] relative overflow-hidden";
 const HERO_BACKGROUND_STYLE = {
   background: "linear-gradient(130deg, hsl(229 73% 28%), hsl(222 68% 17%))",
 };
