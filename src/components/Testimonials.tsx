@@ -1,18 +1,18 @@
-const testimonials = [
+﻿const testimonials = [
   {
-    quote: "A GranKasa transformou nossa busca por um imóvel em uma jornada arquitetônica refinada. A atenção aos detalhes é simplesmente incomparável no mercado de alto padrão.",
-    name: "Carlos Mendonça",
-    role: "CEO, Grupo Atlas",
+    quote: "A GranKasa transformou nossa busca por um imÃ³vel em uma jornada arquitetÃ´nica refinada. A atenÃ§Ã£o aos detalhes Ã© simplesmente incomparÃ¡vel no mercado de alto padrÃ£o.",
+    name: "Carlos MendonÃ§a",
+    role: "Profissional Autônomo",
   },
   {
-    quote: "Da consulta inicial ao fechamento final, a equipe GranKasa tratou cada detalhe com precisão absoluta. Uma experiência imobiliária verdadeiramente personalizada.",
+    quote: "Da consulta inicial ao fechamento final, a equipe GranKasa tratou cada detalhe com precisÃ£o absoluta. Uma experiÃªncia imobiliÃ¡ria verdadeiramente personalizada.",
     name: "Ana Beatriz Lima",
-    role: "Arquiteta de Interiores",
+    role: "Professora",
   },
   {
-    quote: "Não estávamos apenas procurando uma casa; estávamos buscando uma obra de arte. A GranKasa entendeu isso melhor do que qualquer outra no mercado.",
+    quote: "NÃ£o estÃ¡vamos apenas procurando uma casa; estÃ¡vamos buscando uma obra de arte. A GranKasa entendeu isso melhor do que qualquer outra no mercado.",
     name: "Rafael Chen",
-    role: "Empreendedor Digital",
+    role: "Servidor Público",
   },
 ];
 
@@ -20,7 +20,7 @@ const Testimonials = () => (
   <section className="py-32 px-8 md:px-16 max-w-screen-2xl mx-auto">
     <div className="text-center mb-24">
       <span className="text-tertiary-fixed-dim font-bold uppercase tracking-[0.3em] text-xs mb-4 block">Depoimentos</span>
-      <h2 className="text-4xl md:text-6xl font-headline font-bold text-on-surface">Vozes de Distinção</h2>
+      <h2 className="text-4xl md:text-6xl font-headline font-bold text-on-surface">Vozes de DistinÃ§Ã£o</h2>
     </div>
     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
       {testimonials.map((t) => (
@@ -43,3 +43,4 @@ const Testimonials = () => (
 );
 
 export default Testimonials;
+
