@@ -6,16 +6,18 @@ README tecnico completo para operacao, manutencao e evolucao do projeto.
 
 ### Backend (FastAPI)
 ```bash
+cd backend
 python -m venv .venv
 # Windows PowerShell
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-copy .env.example .env
+copy ..\.env.example .env
 uvicorn main:app --host 0.0.0.0 --port 8010 --reload
 ```
 
 ### Frontend (Vite + React) opcional
 ```bash
+cd frontend
 npm install
 npm run dev
 ```
@@ -36,6 +38,7 @@ Nota local:
 
 ### Testes
 ```bash
+cd backend
 python -m pytest -q
 ```
 
@@ -44,6 +47,7 @@ python -m pytest -q
 ```bash
 uvicorn main:app --host 0.0.0.0 --port $PORT
 ```
+`rootDir` esperado no Render: `backend`
 
 ---
 
@@ -158,24 +162,13 @@ Ordem real executada em `agent/controller.py`:
 
 ```text
 .
-├─ agent/                 # Nucleo de negocio conversacional
-├─ app/                   # Backend canonico (entrypoint + db + faq)
-├─ core/                  # Configuracao e logging
-├─ routes/                # Rotas FastAPI extras (WhatsApp)
-├─ services/              # Integracoes externas (envio WhatsApp)
-├─ data/                  # Dados de dominio + persistencia local
-├─ src/                   # Frontend React + Vite
-├─ public/                # Assets estaticos frontend
-├─ main.py                # Wrapper de compat para `app.main:app`
-├─ db.py                  # Wrapper de compat para `app.db`
-├─ faq.py                 # Wrapper de compat para `app.faq`
-├─ requirements.txt       # Dependencias Python
-├─ package.json           # Dependencias/scripts frontend
+├─ backend/               # API FastAPI + orquestrador + testes backend
+├─ frontend/              # App React/Vite
+├─ docs/                  # Documentação complementar
+├─ knowledge/             # Base de conhecimento
 ├─ render.yaml            # Config do Render Web Service
-├─ runtime.txt            # Pin Python local/plataforma (3.11.9)
 ├─ .env.example           # Exemplo completo de configuracao
-├─ scripts/frontend_cli.py # Cliente CLI para conversar com /webhook
-└─ tests/                 # Suite extensa de testes backend
+└─ docker-compose.yml     # Stack local opcional
 ```
 
 ### 3.2 Mapa detalhado de modulos backend
@@ -509,8 +502,8 @@ Dependencias (`requirements.txt`):
 
 ### 5.1 Como o projeto carrega env
 
-- `main.py` e `app/main.py` chamam `load_dotenv(override=True)`.
-- `agent/llm.py` tambem chama `load_dotenv(override=True)`.
+- `backend/main.py` e `backend/app/main.py` chamam `load_dotenv(override=True)`.
+- `backend/agent/llm.py` tambem chama `load_dotenv(override=True)`.
 
 Impacto:
 - Se existir arquivo `.env` no ambiente, seus valores podem sobrescrever envs ja setadas no processo.
@@ -519,7 +512,10 @@ Impacto:
 
 | Variavel | Obrigatoria | Exemplo (sem segredo) | Onde e usada | Impacto se ausente |
 |---|---|---|---|---|
-| `APP_ENV` | nao | `development` | `core/config.py -> Settings.APP_ENV` | default `production` |
+| `APP_ENV` | nao (mas recomendado em prod) | `development` / `production` | `core/config.py`, `app/db.py` | default `development` |
+| `DATABASE_URL` | sim em producao | `postgresql+psycopg://user:password@host:5432/database` | `app/db.py` | em dev sem valor usa SQLite local; em producao sem valor falha startup |
+| `ORCHESTRATOR_STATE_BACKEND` | nao | `auto`, `sql`, `json` | `infrastructure/persistence/session_state.py`, `application/bootstrap.py` | default `auto` (tenta SQL; em producao nao permite fallback para arquivo) |
+| `ORCHESTRATOR_STATE_FILE_PATH` | nao (apenas fallback dev) | `data/orchestrator/session_states.json` | `infrastructure/persistence/session_state.py` | usado somente quando backend JSON estiver ativo |
 | `LOG_LEVEL` | nao | `INFO` | `core/config.py`, `core/logging.py` | default `INFO` |
 | `PORT` | nao (Render injeta) | `8000` | `main.py`, `app/main.py`, `core/config.py` | default `8000` |
 | `FRONTEND_ORIGINS` | nao | `https://frontend.exemplo.com` | `main.py`, `app/main.py` (CORS) | usa allowlist localhost |
@@ -562,6 +558,17 @@ Impacto:
 ### 5.3 Arquivo `.env.example`
 
 O repositorio contem `.env.example` atualizado com **todas** as variaveis acima.
+
+### 5.4 Politica de banco (dev x producao)
+
+- `APP_ENV=development` (ou teste local):
+  - se `DATABASE_URL` nao estiver definida, o backend usa `sqlite:///./data/imoveis.db`.
+  - estado critico do orquestrador tenta SQL; se indisponivel, pode cair para JSON local com log explicito.
+- `APP_ENV=production`:
+  - `DATABASE_URL` e obrigatoria;
+  - deve apontar para PostgreSQL (`postgresql+psycopg://...`);
+  - fallback implicito para SQLite e bloqueado com erro explicito no startup.
+  - persistencia critica do orquestrador exige SQL e nao cai para arquivo local.
 
 ---
 ## 6. Endpoints e contratos
@@ -653,11 +660,12 @@ O repositorio contem `.env.example` atualizado com **todas** as variaveis acima.
 ### 7.2 Backend local
 
 ```bash
+cd backend
 python -m venv .venv
 # Windows
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-copy .env.example .env
+copy ..\.env.example .env
 ```
 
 Edite `.env` com pelo menos:
@@ -667,30 +675,43 @@ Edite `.env` com pelo menos:
 
 Subir API:
 ```bash
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn main:app --host 0.0.0.0 --port 8010 --reload
 ```
+
+### 7.2.1 Backend local com Postgres
+
+```bash
+# Exemplo com Docker local
+docker run --name agente-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=agente_imobiliaria -p 5432:5432 -d postgres:16
+```
+
+No `.env` (raiz do projeto ou `backend/.env`):
+- `APP_ENV=development`
+- `DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/agente_imobiliaria`
+- `ORCHESTRATOR_STATE_BACKEND=sql`
 
 ### 7.3 Frontend local (opcional)
 
 ```bash
+cd frontend
 npm install
 npm run dev
 ```
 
 Configure para frontend:
-- `VITE_BACKEND_URL=http://localhost:8000`
+- `VITE_BACKEND_URL=http://localhost:8010`
 - `VITE_BACKEND_API_KEY=<mesmo WEBHOOK_API_KEY se aplicavel>`
 
 ### 7.4 Servir frontend via backend (modo single service)
 
-`main.py` monta `dist/` em `/` se existir.
+`backend/main.py` monta `dist/` em `/` se existir.
 
 Build frontend:
 ```bash
 npm run build
 ```
 
-Depois rode backend (`uvicorn main:app ...`) e acesse `http://localhost:8000`.
+Depois rode backend (`uvicorn main:app ...`) e acesse `http://localhost:8010`.
 
 Observacao:
 - Sem `dist/`, o backend nao expoe landing page em `/` (apenas API).
@@ -699,11 +720,13 @@ Observacao:
 
 Rodar suite:
 ```bash
+cd backend
 python -m pytest -q
 ```
 
 Coleta apenas (rapido):
 ```bash
+cd backend
 python -m pytest --collect-only -q
 ```
 
@@ -711,19 +734,19 @@ python -m pytest --collect-only -q
 
 #### Health
 ```bash
-curl -X GET http://localhost:8000/health
+curl -X GET http://localhost:8010/health
 ```
 
 #### Webhook principal sem API key
 ```bash
-curl -X POST http://localhost:8000/webhook \
+curl -X POST http://localhost:8010/webhook \
   -H "Content-Type: application/json" \
   -d "{\"session_id\":\"lead-001\",\"message\":\"quero comprar apartamento em Manaira\",\"name\":\"Maria\"}"
 ```
 
 #### Webhook principal com API key
 ```bash
-curl -X POST http://localhost:8000/webhook \
+curl -X POST http://localhost:8010/webhook \
   -H "Content-Type: application/json" \
   -H "X-API-Key: SEU_TOKEN" \
   -d "{\"session_id\":\"lead-001\",\"message\":\"procuro apto 3 quartos em Joao Pessoa\"}"
@@ -738,7 +761,7 @@ Resposta esperada (exemplo):
 
 #### Verificacao WhatsApp (GET)
 ```bash
-curl "http://localhost:8000/webhook/whatsapp?hub.mode=subscribe&hub.verify_token=TOKEN&hub.challenge=12345"
+curl "http://localhost:8010/webhook/whatsapp?hub.mode=subscribe&hub.verify_token=TOKEN&hub.challenge=12345"
 ```
 
 ---
@@ -747,30 +770,48 @@ curl "http://localhost:8000/webhook/whatsapp?hub.mode=subscribe&hub.verify_token
 ### 8.1 Estado atual do repo (`render.yaml`)
 
 ```yaml
+databases:
+  - name: agente-imobiliaria-db
+
 services:
   - type: web
     name: agente-imobiliaria
     runtime: python
+    rootDir: backend
     pythonVersion: "3.12.3"
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: agente-imobiliaria-db
+          property: connectionString
+      - key: ORCHESTRATOR_STATE_BACKEND
+        value: sql
 ```
 
 ### Observacoes operacionais
 
 - O app le `PORT` e o comando usa `$PORT` (correto para Render).
+- `rootDir: backend` evita ambiguidade de build/start quando o repo tem frontend e backend separados.
+- Em `APP_ENV=production`, o backend exige `DATABASE_URL` valida e bloqueia fallback para SQLite.
+- Em producao, o estado critico do orquestrador usa SQL e nao depende de arquivo local para continuidade de sessao.
 - Build atual instala apenas Python deps.
 - Se quiser servir frontend por `main.py` (montagem de `dist/`), o build precisa gerar `dist`.
 
 ### 8.2 Passo a passo de deploy
 
-1. Criar Web Service no Render apontando para este repo.
+1. Criar banco Postgres no Render (Blueprint `databases` ou manual) e depois criar Web Service apontando para este repo.
 2. Confirmar:
 - Runtime Python
 - Build Command: `pip install -r requirements.txt`
 - Start Command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
 3. Preencher env vars (minimo recomendado):
 - `APP_ENV=production`
+- `DATABASE_URL` (via Postgres do Render, preferencialmente `fromDatabase`)
+- `ORCHESTRATOR_STATE_BACKEND=sql`
 - `LOG_LEVEL=INFO`
 - `USE_LLM=true`
 - `TRIAGE_ONLY=true`
@@ -797,6 +838,17 @@ services:
   - `LEAD`, `QUAL`, `SLA`
   - `DEGRADED_MODE`
   - `ROUTER`
+  - `orchestrator_state_backend_sql_ready`
+  - `orchestrator_state_backend_json_fallback` (esperado apenas em dev/local)
+
+### 8.5 Checklist rapido de deploy
+
+1. Confirmar `rootDir: backend` no serviço web do Render.
+2. Confirmar Postgres provisionado e `DATABASE_URL` vindo de `fromDatabase`.
+3. Garantir `APP_ENV=production` e `ORCHESTRATOR_STATE_BACKEND=sql`.
+4. Configurar `WEBHOOK_API_KEY` e `FRONTEND_ORIGINS`.
+5. Fazer smoke test: `GET /health`, `POST /webhook` com sessão nova e com sessão já iniciada.
+6. Validar logs sem fallback indevido: não deve aparecer `orchestrator_state_backend_json_fallback`.
 
 ---
 
@@ -869,7 +921,7 @@ Correlation:
 5. Criar allowlist por origem/IP quando aplicavel.
 6. Aumentar validacao estrita de payload (schema Pydantic para WhatsApp).
 7. Separar segredo frontend/backend (nao expor token sensivel no browser).
-8. Persistir sessoes em store externo (evitar perda em restart e escalabilidade).
+8. Descontinuar trilhas legadas JSON/JSONL nao criticas em producao (quando a operacao SQL estiver estabilizada).
 
 ---
 ## 11. Fluxos de negocio e pontos de falha
@@ -891,8 +943,36 @@ Correlation:
 
 ### 11.4 Persistencia e memoria
 
-- Sessao de conversa em memoria (`InMemoryStore`): perde em restart.
-- Leads/eventos ficam em arquivo (JSON/JSONL).
+- Estado critico da sessao do orquestrador (ex.: `pending_field`, `last_question_key`, `asked_questions`, `field_ask_count`, `lead_profile`) e persistido em SQL e reidratado a cada turno.
+- Em producao, esse estado critico nao usa fallback para arquivo local.
+- Persistencias legadas em JSON/JSONL continuam para trilhas operacionais secundarias e compatibilidade transitoria.
+
+### 11.5 Estado Critico (Antes x Depois)
+
+- Antes:
+  - parte do contexto fino do orquestrador ficava so em memoria (`agent.state.store`);
+  - restart/redeploy podia perder `pending_field`, `last_question_key` e contadores de coleta.
+- Depois:
+  - o orquestrador salva snapshot critico por sessao em SQL (`orchestrator_session_states`);
+  - em cada mensagem, a reidratacao segue precedencia nao destrutiva:
+    1) estado runtime em memoria;
+    2) snapshot persistido em SQL;
+    3) snapshot operacional de `Lead`/`Conversation`.
+- O que ainda pode usar arquivo local:
+  - fallback de estado critico apenas em dev/local (`ORCHESTRATOR_STATE_BACKEND=json`);
+  - trilhas legadas JSON/JSONL nao criticas para continuidade imediata de sessao.
+
+### 11.6 Matriz de Persistencia por Ambiente
+
+| Dado | Development | Production |
+|---|---|---|
+| Estado critico da sessao/orquestrador | SQL preferencial (`ORCHESTRATOR_STATE_BACKEND=auto/sql`), com fallback JSON explicito quando SQL indisponivel | SQL obrigatorio (`ORCHESTRATOR_STATE_BACKEND=sql`) |
+| Leads/Conversations/Messages operacionais do orquestrador | JSON (`backend/infrastructure/persistence/json_file.py`) | JSON (compatibilidade transitória) |
+| Trilhas legadas (`agent/persistence.py`: leads/events/index) | JSON/JSONL | JSON/JSONL (nao critico para retomar pending_field) |
+
+Motivo da convivência com legado:
+- reduzir risco de regressao enquanto a operacao valida a camada SQL do estado critico;
+- preservar compatibilidade com integrações e trilhas históricas já consumidas fora do runtime principal.
 
 ---
 
@@ -914,9 +994,9 @@ Correlation:
 - Esforco: 2-4 dias.
 - Entrega: substituir resposta fixa por fluxo de triagem completo.
 
-2. Persistencia de sessao em Redis/Postgres
+2. Migrar entidades operacionais restantes para SQL (alem do estado critico de sessao)
 - Esforco: 3-5 dias.
-- Entrega: sessao sobrevive restart e escala horizontal.
+- Entrega: reduzir ainda mais dependencia de JSON/JSONL local.
 
 3. Hardening de seguranca em producao
 - Esforco: 1-2 dias.
@@ -959,7 +1039,7 @@ Correlation:
 
 - Duplicidade de entrypoints (`main.py` e `app/main.py`).
 - Mismatch de versao Python em arquivos de deploy/runtime.
-- Estado de conversa apenas em memoria.
+- Trilhas legadas de persistencia ainda em JSON/JSONL.
 - `agent/unified_llm.py` legado paralelo ao fluxo atual.
 - Endpoint WhatsApp ainda sem uso do motor principal de triagem.
 
@@ -978,21 +1058,26 @@ Correlation:
 
 ```bash
 # backend dev
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+cd backend
+uvicorn main:app --host 0.0.0.0 --port 8010 --reload
 
 # backend entrypoint alternativo
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn app.main:app --host 0.0.0.0 --port 8010 --reload
 
 # testes
+cd backend
 python -m pytest -q
 
 # coletar testes
+cd backend
 python -m pytest --collect-only -q
 
 # frontend dev
+cd frontend
 npm run dev
 
 # frontend build
+cd frontend
 npm run build
 
 # frontend lint
