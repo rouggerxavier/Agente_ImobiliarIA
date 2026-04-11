@@ -1,17 +1,16 @@
-[app]
-name = "grankasa-backend"
+app = "grankasa-backend"
 primary_region = "gru"
 
 [build]
-dockerfile = "Dockerfile.backend"
+  dockerfile = "Dockerfile.backend"
 
 [http_service]
-internal_port = 8010
-force_https = true
-auto_stop_machines = false
-auto_start_machines = true
-min_machines_running = 1
+  internal_port = 8010
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
 
 [[vm]]
-size = "shared-cpu-1x"
-memory = "256mb"
+  size = "shared-cpu-1x"
+  memory = "256mb"
