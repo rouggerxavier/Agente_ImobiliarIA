@@ -27,7 +27,7 @@ SEED_IMOVEIS = [
             "Apartamento residencial em Copacabana com planta bem distribuída, "
             "boa iluminação e acesso rápido ao comércio da região."
         ),
-        "foto_url": "/imoveis-img/locacao-01.jpg",
+        "foto_url": "/imoveis/locacao-01.jpg",
         "valor_aluguel": Decimal("4000.00"),
         "valor_compra": None,
         "condominio": Decimal("1043.00"),
@@ -53,7 +53,7 @@ SEED_IMOVEIS = [
             "Imóvel residencial no Leblon, ideal para famílias que buscam localização "
             "nobre, conforto interno e mobilidade na Zona Sul."
         ),
-        "foto_url": "/imoveis-img/locacao-02.jpg",
+        "foto_url": "/imoveis/locacao-02.jpg",
         "valor_aluguel": Decimal("7900.00"),
         "valor_compra": None,
         "condominio": Decimal("1570.00"),
@@ -79,7 +79,7 @@ SEED_IMOVEIS = [
             "Apartamento amplo em Copacabana, próximo a serviços e com planta funcional "
             "para rotina de moradia e home office."
         ),
-        "foto_url": "/imoveis-img/locacao-03.jpg",
+        "foto_url": "/imoveis/locacao-03.jpg",
         "valor_aluguel": Decimal("6500.00"),
         "valor_compra": None,
         "condominio": Decimal("1800.00"),
@@ -105,7 +105,7 @@ SEED_IMOVEIS = [
             "Apartamento com varanda em Ipanema, ambientes integrados e boa circulação "
             "de ar, ideal para quem deseja morar próximo à praia."
         ),
-        "foto_url": "/imoveis-img/locacao-04.jpg",
+        "foto_url": "/imoveis/locacao-04.jpg",
         "valor_aluguel": Decimal("9800.00"),
         "valor_compra": None,
         "condominio": Decimal("2100.00"),
@@ -131,7 +131,7 @@ SEED_IMOVEIS = [
             "Imóvel em Botafogo com planta inteligente, excelente para casal ou família "
             "pequena, perto de metrô e comércio."
         ),
-        "foto_url": "/imoveis-img/locacao-05.jpg",
+        "foto_url": "/imoveis/locacao-05.jpg",
         "valor_aluguel": Decimal("5200.00"),
         "valor_compra": None,
         "condominio": Decimal("1200.00"),
@@ -157,7 +157,7 @@ SEED_IMOVEIS = [
             "Apartamento para venda em Copacabana com boa relação custo-benefício, "
             "layout versátil e proximidade da praia."
         ),
-        "foto_url": "/imoveis-img/venda-01.jpg",
+        "foto_url": "/imoveis/venda-01.jpg",
         "valor_aluguel": None,
         "valor_compra": Decimal("630000.00"),
         "condominio": Decimal("1150.00"),
@@ -183,7 +183,7 @@ SEED_IMOVEIS = [
             "Studio reformado em Copacabana para investimento ou moradia, com "
             "condomínio tradicional e acesso fácil ao transporte."
         ),
-        "foto_url": "/imoveis-img/venda-02.jpg",
+        "foto_url": "/imoveis/venda-02.jpg",
         "valor_aluguel": None,
         "valor_compra": Decimal("450000.00"),
         "condominio": Decimal("900.00"),
@@ -209,7 +209,7 @@ SEED_IMOVEIS = [
             "Apartamento moderno na Barra da Tijuca com varanda gourmet e "
             "infraestrutura completa no condomínio."
         ),
-        "foto_url": "/imoveis-img/venda-03.jpg",
+        "foto_url": "/imoveis/venda-03.jpg",
         "valor_aluguel": None,
         "valor_compra": Decimal("1250000.00"),
         "condominio": Decimal("2100.00"),
@@ -235,7 +235,7 @@ SEED_IMOVEIS = [
             "Cobertura duplex em Ipanema com área externa e vista livre, "
             "projeto ideal para quem busca espaço e exclusividade."
         ),
-        "foto_url": "/imoveis-img/venda-04.jpg",
+        "foto_url": "/imoveis/venda-04.jpg",
         "valor_aluguel": None,
         "valor_compra": Decimal("2500000.00"),
         "condominio": Decimal("3400.00"),
@@ -261,7 +261,7 @@ SEED_IMOVEIS = [
             "Apartamento residencial em Botafogo com metragem equilibrada, "
             "boa ventilação e fácil acesso a serviços."
         ),
-        "foto_url": "/imoveis-img/venda-05.jpg",
+        "foto_url": "/imoveis/venda-05.jpg",
         "valor_aluguel": None,
         "valor_compra": Decimal("870000.00"),
         "condominio": Decimal("1300.00"),
@@ -463,7 +463,7 @@ def _build_seed_from_audit_file() -> list[dict]:
 
         foto_url = _normalize_text(item.get("imagem"))
         if not foto_url or "logo.png" in foto_url.lower():
-            foto_url = "/imoveis-img/fallback.jpg"
+            foto_url = "/imoveis/fallback.jpg"
 
         tipo_label = categoria or "Imovel"
         titulo = f"{tipo_label} em {bairro}"
