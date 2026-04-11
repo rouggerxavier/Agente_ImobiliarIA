@@ -398,7 +398,7 @@ function normalizeFotoUrl(imovel: Imovel): string {
       LEGACY_DEAD_IMAGE_HOSTS.has(parsed.hostname) && parsed.pathname.includes("/grankasa/vista.imobi/fotos/");
 
     if (isLegacyDeadCatalogImage) {
-      return localCatalogImageFor(imovel);
+      return `/imoveis/imovel-${imovel.id}.jpg`;
     }
   } catch {
     return rawValue;
