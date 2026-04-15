@@ -80,7 +80,7 @@ const Navbar = () => {
             (21) 2549-9000
           </a>
           <a href="https://docsuite.com.br/login/granka" target="_blank" rel="noreferrer"
-            className="bg-primary-dark text-white px-4 py-2.5 md:px-7 md:py-3.5 rounded-lg md:rounded-xl text-[11px] md:text-sm uppercase tracking-[0.14em] md:tracking-widest font-bold leading-none md:leading-normal hover:opacity-90 active:scale-95 transition-all">
+            className="bg-primary-dark text-white px-5 py-3 md:px-7 md:py-3.5 rounded-xl text-xs md:text-sm uppercase tracking-[0.16em] md:tracking-widest font-bold hover:opacity-90 active:scale-95 transition-all">
             Painel do Cliente
           </a>
           <button type="button"
