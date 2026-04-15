@@ -44,10 +44,10 @@ const Navbar = () => {
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-slate-50/70 backdrop-blur-xl transition-all border-b border-outline-variant/20">
-      <div className="flex justify-between items-center pl-0 pr-8 md:pl-0 md:pr-16 py-1 md:py-2 w-full max-w-screen-2xl mx-auto">
+      <div className="flex justify-between items-center pl-0 pr-4 md:pl-0 md:pr-16 py-0.5 md:py-2 w-full max-w-screen-2xl mx-auto">
         {/* Logo */}
-        <Link to="/" className="-ml-4 md:-ml-12 flex items-center">
-          <img src="/logo-grankasa.png" alt="GranKasa" className="h-24 w-auto" />
+        <Link to="/" className="-ml-2 md:-ml-12 flex items-center">
+          <img src="/logo-grankasa.png" alt="GranKasa" className="h-14 md:h-24 w-auto" />
         </Link>
 
         {/* Desktop nav */}
@@ -74,22 +74,22 @@ const Navbar = () => {
         </div>
 
         {/* Right actions */}
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-3 md:gap-8">
           <a href="tel:+552125499000"
             className="hidden lg:block text-on-surface-variant hover:text-tertiary-fixed-dim transition-all font-medium text-base">
             (21) 2549-9000
           </a>
           <a href="https://docsuite.com.br/login/granka" target="_blank" rel="noreferrer"
-            className="bg-primary-dark text-white px-7 py-3.5 rounded-xl text-sm uppercase tracking-widest font-bold hover:opacity-90 active:scale-95 transition-all">
+            className="bg-primary-dark text-white px-4 py-2.5 md:px-7 md:py-3.5 rounded-lg md:rounded-xl text-[11px] md:text-sm uppercase tracking-[0.14em] md:tracking-widest font-bold leading-none md:leading-normal hover:opacity-90 active:scale-95 transition-all">
             Painel do Cliente
           </a>
           <button type="button"
-            className="md:hidden text-on-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tertiary-fixed-dim"
+            className="md:hidden p-1.5 text-on-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tertiary-fixed-dim"
             onClick={() => setOpen(!open)}
             aria-label={open ? "Fechar menu" : "Abrir menu"}
             aria-expanded={open}
             aria-controls={mobileMenuId}>
-            {open ? <X className="h-7 w-7" /> : <Menu className="h-7 w-7" />}
+            {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
       </div>
