@@ -44,10 +44,10 @@ const Navbar = () => {
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-slate-50/70 backdrop-blur-xl transition-all border-b border-outline-variant/20">
-      <div className="flex justify-between items-center pl-0 pr-8 md:pl-0 md:pr-16 py-1 md:py-2 w-full max-w-screen-2xl mx-auto">
+      <div className="flex justify-between items-center pl-0 pr-8 md:pl-0 md:pr-16 py-0 md:py-1 w-full max-w-screen-2xl mx-auto">
         {/* Logo */}
         <Link to="/" className="-ml-4 md:-ml-12 flex items-center">
-          <img src="/logo-grankasa.png" alt="GranKasa" className="h-24 w-auto" />
+          <img src="/logo-grankasa.png" alt="GranKasa" className="h-20 w-auto" />
         </Link>
 
         {/* Desktop nav */}
