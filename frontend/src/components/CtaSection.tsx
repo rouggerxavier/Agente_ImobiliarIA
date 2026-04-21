@@ -23,7 +23,7 @@ const CtaSection = () => (
         <img
           src="/cta-main.png"
           alt="Imóvel exclusivo GranKasa com piscina"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover object-[center_30%]"
         />
       </div>
     </div>
