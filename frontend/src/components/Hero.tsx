@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { Search, ChevronLeft, ChevronRight, MapPin } from "lucide-react";
 
 const slides = [
-  { url: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1920&q=85", alt: "Villa de luxo moderna ao entardecer com piscina e vista para o mar" },
-  { url: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1920&q=85", alt: "Edifício residencial contemporâneo de alto padrão" },
-  { url: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1920&q=85", alt: "Casa moderna com piscina e jardim curado" },
-  { url: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1920&q=85", alt: "Condomínio de alto padrão com área de lazer" },
-  { url: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920&q=85", alt: "Fachada de apartamento luxuoso com varanda" },
+  { url: "/hero-1.png", alt: "Imóvel de alto padrão em Copacabana" },
+  { url: "/hero-2.png", alt: "Residência de luxo com vista privilegiada" },
+  { url: "/hero-3.png", alt: "Apartamento contemporâneo de alto padrão" },
+  { url: "/hero-4.png", alt: "Condomínio exclusivo com área de lazer" },
+  { url: "/hero-5.png", alt: "Fachada moderna em localização prime" },
 ];
 
 const INTERVAL_MS = 10000;
