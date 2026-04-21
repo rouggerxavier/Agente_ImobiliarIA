@@ -23,7 +23,8 @@ const CtaSection = () => (
         <img
           src="/cta-main.png"
           alt="Imóvel exclusivo GranKasa com piscina"
-          className="w-full h-full object-cover object-[center_30%]"
+          className="w-full h-full object-cover"
+          style={{ objectPosition: "center 25%" }}
         />
       </div>
     </div>
