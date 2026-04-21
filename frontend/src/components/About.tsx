@@ -13,8 +13,8 @@ const About = () => {
         <div className="lg:w-1/2 relative">
           <div className="absolute -top-10 -left-10 w-40 h-40 border-t-2 border-l-2 border-tertiary-fixed-dim/30" />
           <img
-            src="https://images.unsplash.com/photo-1486325212027-8081e485255e?w=800&q=80"
-            alt="Edifício moderno de vidro refletindo o céu azul — arquitetura contemporânea de alto padrão"
+            src="/about-main.png"
+            alt="Imóvel de alto padrão GranKasa"
             className="rounded-lg shadow-2xl relative z-10 w-full object-cover"
           />
           <div className="absolute -bottom-10 -right-10 p-8 bg-surface-container-lowest shadow-xl z-20 max-w-xs hidden md:block">
@@ -23,7 +23,7 @@ const About = () => {
             </p>
             <div className="flex items-center gap-3">
               <div className="h-px w-8 bg-tertiary-fixed-dim" />
-              <span className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Nota do Fundador</span>
+              <span className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Vanda — Fundadora da GranKasa</span>
             </div>
           </div>
         </div>

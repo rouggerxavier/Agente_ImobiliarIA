@@ -21,8 +21,8 @@ const CtaSection = () => (
       </div>
       <div className="lg:w-1/2 min-h-[400px]">
         <img
-          src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80"
-          alt="Escritório de design elegante e minimalista com janelas do piso ao teto"
+          src="/cta-main.png"
+          alt="Imóvel exclusivo GranKasa com piscina"
           className="w-full h-full object-cover"
         />
       </div>
